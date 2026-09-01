@@ -1,0 +1,116 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "device-management-system"
+version = "0.1.0"
+description = "Modulare Software zur Erfassung und Verwaltung von Kundengeräten mit GLPI-Integration"
+authors = [
+    {name = "OpenHands Agent", email = "openhands@all-hands.dev"}
+]
+license = {text = "Proprietary"}
+requires-python = ">=3.9"
+dependencies = [
+    # Web Framework
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    
+    # Database & ORM
+    "sqlalchemy>=2.0.0",
+    "psycopg2-binary>=2.9.0",
+    "alembic>=1.12.0",
+    
+    # Authentication
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "python-multipart>=0.0.6",
+    
+    # HTTP Client
+    "httpx>=0.25.0",
+    "requests>=2.31.0",
+    
+    # Config Management
+    "pydantic-settings>=2.1.0",
+    "pyyaml>=6.0",
+    
+    # File Processing & OCR
+    "tesseract>=0.1.8",
+    "ocrmypdf>=15.0.0",
+    "paddleocr>=2.7.0",
+    "pillow>=10.0.0",
+    "watchdog>=3.0.0",
+    "python-magic>=0.4.27",
+    "pypdf2>=3.0.0",
+    "pdf2image>=1.16.3",
+    
+    # Networking & Scanning
+    "python-nmap>=0.7.1",
+    "scapy>=2.5.0",
+    "manuf>=1.1.5",
+    "ldap3>=2.9.1",
+    "paramiko>=3.3.0",
+    
+    # Background Tasks
+    "celery>=5.3.0",
+    "redis>=5.0.0",
+    
+    # Utilities
+    "python-dateutil>=2.8.2",
+    "pytz>=2023.3",
+    "colorama>=0.4.6",
+    "certifi>=2023.7.22",
+    
+    # Development
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.9.0",
+    "flake8>=6.1.0",
+    "mypy>=1.5.0",
+    "pre-commit>=3.4.0",
+]
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.4.0",
+    "mkdocstrings[python]>=0.23.0",
+]
+
+[project.urls]
+Documentation = "https://github.com/user/device-management-system"
+Repository = "https://github.com/user/device-management-system"
+
+[tool.setuptools]
+packages = [
+    "device_management",
+    "device_management.modules",
+    "device_management.api",
+    "device_management.models",
+    "device_management.config",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py39', 'py310', 'py311']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
