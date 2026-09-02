@@ -223,3 +223,64 @@ class NetworkScanResponse(NetworkScanCreate):
     
     class Config:
         from_attributes = True
+
+
+class OCRProcessResult(BaseModel):
+    """Schema für OCR-Verarbeitungsergebnisse"""
+    filename: str
+    status: str
+    ocr_confidence: Optional[float] = 0.0
+    processing_time: Optional[str] = None
+    extracted_data: Dict[str, Any] = Field(default_factory=dict)
+    raw_text_preview: Optional[str] = None
+    template_applied: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class OCRTemplateInfo(BaseModel):
+    """Schema für OCR-Vorlageninformationen"""
+    id: str
+    name: str
+    description: Optional[str] = None
+    field_count: int = 0
+    
+    class Config:
+        from_attributes = True
+
+
+class OCRProcessingStatus(BaseModel):
+    """Schema für OCR-Verarbeitungsstatus"""
+    service_running: bool
+    total_files_processed: int = 0
+    last_updated: str
+    available_templates: int = 0
+    watch_path: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class OCRCreateDeviceRequest(BaseModel):
+    """Schema für Geräteerstellung aus OCR-Ergebnissen"""
+    ocr_result_id: str
+    user_data: Dict[str, Any] = Field(default_factory=dict)
+    
+    @validator("ocr_result_id")
+    def validate_ocr_result_id(cls, v):
+        if not v or not isinstance(v, str):
+            raise ValueError("OCR result ID must be a non-empty string")
+        return v
+
+
+class OCRUploadRequest(BaseModel):
+    """Schema für OCR-Datei-Upload"""
+    template_id: Optional[str] = None
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "template_id": "standard_customer_form"
+            }
+        }

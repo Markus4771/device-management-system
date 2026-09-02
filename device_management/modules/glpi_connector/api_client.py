@@ -6,7 +6,7 @@ import httpx
 import logging
 from typing import Dict, List, Optional, Any
 from datetime import datetime
-from ..config import settings
+from ...config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ class GLPIAPIClient:
                 headers=self._get_headers()
             )
             
-            if response.status_code ==数与 200:
+            if response.status_code == 200:
                 self.session_token = None
                 logger.info("GLPI Session beendet")
                 return True

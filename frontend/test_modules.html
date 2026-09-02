@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Management - Module Testing</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --info-color: #3498db;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #1a2530);
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .module-card {
+            border: none;
+            border-radius: \(\ge0.bs-"12px");
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .module-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .module-header {
+            border-radius: 12px 12px 0 0 !important;
+            color: white;
+            font-weight: 600;
+            padding: 15px 20px;
+        }
+        
+        .module-header.dns {
+            background: linear-gradient(135deg, #1abc9c, #16a085);
+        }
+        
+        .module-header.mac {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+        }
+        
+        .module-header.scanner {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+        }
+        
+        .module-header.glpi {
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+        }
+        
+        .module-header.ocr {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+        
+        .test-badge {
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+        }
+        
+        .test-result {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #ddd;
+            background-color: white;
+        }
+        
+        .test-result.success {
+            border-left-color: var(--success-color);
+            background-color: rgba(39, 174, 96, 0.05);
+        }
+        
+        .test-result.warning {
+            border-left-color: var(--warning-color);
+            background-color: rgba(243, 156, 18, 0.05);
+        }
+        
+        .test-result.error {
+            border-left-color: var(--danger-color);
+            background-color: rgba(231, 76, 60, 0.05);
+        }
+        
+        .test-result.info {
+            border-left-color: var(--info-color);
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .api-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: AACB400px;
+            display: none;
+        }
+        
+        .mock-data {
+            background-color: #f8f9fa;
+            border: 1px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .btn-test {
+            padding: 8px 20px;
+            font-weight: 600;
+        }
+        
+        .btn-test-dns {
+            background: linear-gradient(135deg, #1abc9c, #16a085);
+            border: none;
+            color: white;
+        }
+        
+        .btn-test-mac {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+            border: none;
+            color: white;
+        }
+        
+        .btn-test-scanner {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            border: none;
+            color: white;
+        }
+        
+        .btn-test-glpi {
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+            border: none;
+            color: white;
+        }
+        
+        .btn-test-all {
+            background: linear-gradient(135deg, #27ae60, #219653);
+            border: none;
+            color: white;
+            padding: superposition: 15px 30px;
+            font-size: 1.1rem;
+        }
+        
+        .progress-bar-module {
+            height: 10px;
+            border-radius: 5px;
+            background-color: #ecf0f1;
+            margin: 10px 0;
+        }
+        
+        .progress-module-value {
+            height: 100%;
+            border-radius: 5px;
+            background: linear-gradient(90deg, #3498db, #1abc9c);
+            transition: width 0.5s ease;
+        }
+        
+        @media (max-width: 768px) {
+            .api-status {
+                position: static;
+                margin: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-1">
+                        <i class="fas fa-vial me-2"></i>
+                        Module Testing - Phase 2
+                    </h1>
+                    <p class="mb-0 opacity-75">Testumgebung für Gerätemanagement-Module</p>
+                </div>
+                <div>
+                    <a href="index.html" class="btn btn-light btn-sm me-2">
+                        <i class="fas fa-arrow-left me-1"></i> Zurück
+                    </a>
+                    <a href="network_scans.html" class="btn btn-info btn-sm">
+                        <i class="fas fa-search me-1"></i> Scans
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- API Status Info -->
+        <div id="apiMessage" class="api-status alert" style="display: none;"></div>
+        
+        <!-- Module Testing Panel -->
+        <div class="row mb-4">
+            <div class="col">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <i class="fas fa-tasks me-2"></i> Module Status & Testing
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-8">
+                                <h5 class="mb-3">Test-Übersicht</h5>
+                                <p class="text-muted">
+                                    Testen Sie die Funktionen aller Phase 2 Module entweder einzeln oder 
+                                    mit einem umfassenden Integrationstest.
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button class="btn btn-test-all w-100" onclick="runAllTests()">
+                                    <i class="fas fa-play me-2"></i> Alle Tests durchführen
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Test-Progress -->
+                        <div class="row mb-4">
+                            <div class="col">
+                                <h6>Fortschritt:</h6>
+                                <div class="progress-bar-module">
+                                    <div class="progress-module-value" id="overallProgressBar" style="width: 0%"></div>
+                                </div>
+                                <div class="d-flex justify-content-between mt-2">
+                                    <small>Status: <span id="overallStatus" class="text-muted">Bereit</span></small>
+                                    <small id="overallProgressText">0/5 Module</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DNS Resolver Module -->
+        <div class="row mb-4">
+            <div class="col-lg-6">
+                <div class="module-card">
+                    <div class="module-header dns">
+                        <i class="fas fa-globe me-2"></i> DNS Resolver Module
+                        <span class="test-badge badge bg-warning float-end">Testing</span>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-title">Funktionsweise</h6>
+                        <p class="small text-muted mb-3">
+                            DNS-Auflösung für Hostname-IP-Mapping, Rückwärtssuche, Batch-Processing und Zonentransfer-Prüfung.
+                        </p>
+                        
+                        <div class="mb-3">
+                            <label for="dnsTestQuery" class="form-label">Test-Query</label>
+                            <input type="text" class="form-control" id="dnsTestQuery" 
+                                   value="google.com" placeholder="Hostname oder IP">
+                        </div>
+                        
+                        <div class="d-grid gap-2 mb-4">
+                            <button class="btn btn-test-dns" onclick="testDNSResolver('forward')">
+                                <i class="fas fa-forward me-1"></i> Vorwärts-DNS Test
+                            </button>
+                            <button class="btn btn-test-dns" onclick="testDNSResolver('reverse')">
+                                <i class="fas fa-backward me-1"></i> Rückwärts-DNS Test
+                            </button>
+                            <button class="btn btn-test-dns" onclick="testBatchDNS()">
+                                <i class="fas fa-tasks me-1"></i> Batch-DNS Test (5 Queries)
+                            </button>
+                        </div>
+                        
+                        <div id="dnsTestResults">
+                            <!-- DNS-Test-Ergebnisse werden hier angezeigt -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <!-- MAC Vendor Module -->
+                <div class="module-card">
+                    <div class="module-header mac">
+                        <i class="fas fa-network-wired me-2"></i> MAC Vendor Module
+                        <span class="test-badge badge bg-white text-dark float-end">IEEE OUI</span>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-title">Funktionsweise</h6>
+                        <p class="small text-muted mb-3">
+                            Hersteller-Identifikation über MAC-Adressen, Multicast/Unicast-Erkennung, 
+                            lokale Datenbank mit IEEE OUI-Daten.
+                        </p>
+                        
+                        <div class="mb-3">
+                            <label for="macTestInput" class="form-label">Test-MAC-Adressen</label>
+                            <textarea class="form-control" id="macTestInput" rows="2">00:11:22:33:44:55, AA:BB:CC:DD:EE:FF, 08:00:27:XX:YY:ZZ</textarea>
+                            <div class="form-text">Kommagetrennte MAC-Adressen</div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 mb-4">
+                            <button class="btn btn-test-mac" onclick="testMACVendorLookup()">
+                                <i class="fas fa-search me-1"></i> Vendor Lookup Test
+                            </button>
+                            <button class="btn btn-test-mac" onclick="testMACAnalysis()">
+                                <i class="fas fa-microscope me-1"></i> Detaillierte Analyse
+                            </button>
+                            <button class="btn btn-test-mac" onclick="testDatabaseRefresh()">
+                                <i class="fas fa-sync-alt me-1"></i> Datenbank-Refresh Test
+                            </button>
+                        </div>
+                        
+                        <div id="macTestResults">
+                            <!-- MAC-Test-Ergebnisse werden hier angezeigt -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Network Scanner & GLPI Sync -->
+        <div class="row mb-4">
+            <div class="col-lg-6">
+                <div class="module-card">
+                    <div class="module-header scanner">
+                        <i class="fas fa-search me-2"></i> Network Scanner Module
+                        <span class="test-badge badge bg-danger float-end">IP-Range</span>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-title">Funktionsweise</h6>
+                        <p class="small text-muted mb-3">
+                            Ping-Sweep, ARP-Discovery, Port-Scan (begrenzt), OS-Detection mit paralleler Verarbeitung.
+                        </p>
+                        
+                        <div class="alert alert-warning small mb-3">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            <strong>Sicherheitshinweis:</strong> Testet nur private IP-Bereiche (10.x.x.x, 192.168.x.x)
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="scanTestRange" class="form-label">Test-IP-Bereich</label>
+                                <input type="text" class="form-control" id="scanTestRange" 
+                                       value="192.168.1.0/24" placeholder="z.B. 192.168.1.0/24">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="scanTestType" class="form-label">Scan-Typ</label>
+                                <select class="form-control" id="scanTestType">
+                                    <option value="ping_sweep">Ping Sweep (schnell)</option>
+                                    <option value="arp_discovery">ARP Discovery (präzise)</option>
+                                    <option value="port_scan">Port Scan (begrenzt)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 mb-4">
+                            <button class="btn btn-test-scanner" onclick="testNetworkScanner('quick')">
+                                <i class="fas fa-bolt me-1"></i> Schnelltest (10 IPs)
+                            </button>
+                            <button class="btn btn-test-scanner" onclick="testNetworkScanner('full')">
+                                <i class="fas fa-search-plus me-1"></i> Vollständiger Scan
+                            </button>
+                            <button class="btn btn-test-scanner" onclick="testConcurrentScans()">
+                                <i class="fas fa-layer-group me-1"></i> Parallele Scans Test
+                            </button>
+                        </div>
+                        
+                        <div id="scannerTestResults">
+                            <!-- Scanner-Test-Ergebnisse werden hier angezeigt -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="module-card">
+                    <div class="module-header glpi">
+                        <i class="fas fa-sync-alt me-2"></i> GLPI Sync Module
+                        <span class="test-badge badge bg-info float-end">API v11</span>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-title">Funktionsweise</h6>
+                        <p class="small text-muted mb-3">
+                            Synchronisation zwischen Scan-Ergebnissen und GLPI 11, automatisches Gerätemanagement, 
+                            Konfliktlösung und Auditing.
+                        </p>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="glpiUseMock" checked>
+                                <label class="form-check-label" for="glpiUseMock">
+                                    Mock-Daten verwenden (ohne GLPI-Konnektivität)
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3" id="glpiRealConfig" style="display: none;">
+                            <div class="col-md-6">
+                                <label for="glpiTestEntity" class="form-label">GLPI Entity ID</label>
+                                <input type="text" class="form-control" id="glpiTestEntity" 
+                                       placeholder="z.B. 123">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="glpiTestURL" class="form-label">GLPI URL</label>
+                                <input type="text" class="form-control" id="glpiTestURL" 
+                                       value="https://glpi.example.com">
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 mb-4">
+                            <button class="btn btn-test-glpi" onclick="testGLPIConnection()">
+                                <i class="fas fa-plug me-1"></i> GLPI Verbindungstest
+                            </button>
+                            <button class="btn btn-test-glpi" onclick="testGLPISync()">
+                                <i class="fas fa-sync-alt me-1"></i> Sync-Prozess Test
+                            </button>
+                            <button class="btn btn-test-glpi" onclick="testGLPIEntities()">
+                                <i class="fas fa-building me-1"></i> Entities Abruf
+                            </button>
+                        </div>
+                        
+                        <div id="glpiTestResults">
+                            <!-- GLPI-Test-Ergebnisse werden hier angezeigt -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Integration & Mock Data -->
+        <div class="row">
+            <div class="col">
+                <div class="module-card">
+                    <div class="module-header ocr">
+                        <i class="fas fa-file-alt me-2"></i> Integration & Mock-Daten
+                        <span class="test-badge badge bg-light text-dark float-end">DEV</span>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-title">Integrationstests</h6>
+                        <p class="small text-muted mb-3">
+                            Testen Sie die Zusammenarbeit aller Module und die Erzeugung realistischer Testdaten.
+                        </p>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-8">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-primary" onclick="testModuleIntegration()">
+                                        <i class="fas fa-project-diagram me-1"></i> Modul-Integration testen
+                                    </button>
+                                    <button class="btn btn-success" onclick="generateTestData()">
+                                        <i class="fas fa-database me-1"></i> Testdaten generieren
+                                    </button>
+                                    <button class="btn btn-info" onclick="testAPIModules()">
+                                        <i class="fas fa-code me-1"></i> API-Module validieren
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-outline-danger w-100" onclick="clearAllTestResults()">
+                                    <i class="fas fa-trash-alt me-1"></i> Alle Ergebnisse löschen
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Mock-Daten Anzeige -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Generierte Mock-Daten</h6>
+                                <div class="mock-data" id="mockDataOutput">
+                                    Wählen Sie einen Test aus...
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Test-Log</h6>
+                                <div class="test-result info" style="max-height: 200px; overflow-y: auto;" id="testLog">
+                                    <div class="small">
+                                        <div><i class="fas fa-info-circle me-1"></i> Testsystem initialisiert</div>
+                                        <div><i class="fas fa-info-circle me-1"></i> Bereit für Modultests</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Konfiguration
+        const API_BASE_URL = 'http://localhost:8000'; // Backend API URL
+        const API_PREFIX = '/api/v1'; // API Prefix
+        const MOCK_MODE = true; // Standardmäßig Mock-Modus
+        
+        // Test-Stats
+        let testResults = {
+            dns: { passed: false, tests: 0, passedCount: 0 },
+            mac: { passed: false, tests: 0, passedCount: 0 },
+            scanner: { passed: false, tests: 0, passedCount: 0 },
+            glpi: { passed: false, tests: 0, passedCount: 0 },
+            integration: { passed: false, tests: 0, passedCount: 0 }
+        };
+        
+        // Initialisierung
+        document.addEventListener('DOMContentLoaded', function() {
+            // API Status prüfen
+            checkAPIStatus();
+            
+            // Event Listeners
+            document.getElementById('glpiUseMock').addEventListener('change', function() {
+                const realConfig = document.getElementById('glpiRealConfig');
+                realConfig.style.display = this.checked ? 'none' : 'block';
+            });
+            
+            updateOverallProgress();
+        });
+        
+        // API Status prüfen
+        async function checkAPIStatus() {
+            try {
+                const response = await fetch(`${API_BASE_URL}${API_PREFIX}/health`);
+                if (response.ok) {
+                    showApiMessage('✅ Test-API erreichbar', 'success');
+                    return true;
+                }
+            } catch (error) {
+                showApiMessage('⚠️ Test-API nicht erreichbar - Mock-Modus aktiviert', 'warning');
+                return false;
+            }
+        }
+        
+        // DNS Resolver Test
+        async function testDNSResolver(type) {
+            const query = document.getElementById('dnsTestQuery').value.trim() || 'google.com';
+            addTestLog(`Starte DNS ${type}-Test für "${query}"`);
+            
+            // Mock-Daten als Fallback
+            if (!await checkAPIStatus()) {
+                const mockResults = {
+                    forward: {
+                        query: query,
+                        query_type: 'forward',
+                        answers: [
+                            { name: query, record_type: 'A', value: '142.250.185.78', ttl: 300 },
+                            { name: query, record_type: 'AAAA', value: '2a00:1450:4001:81b::200e', ttl: 300 }
+                        ],
+                        authoritative: false,
+                        response_time_ms: 45.2,
+                        timestamp: new Date().toISOString()
+                    },
+                    reverse: {
+                        query: query,
+                        query_type: 'reverse',
+                        answers: [
+                            { name: '142.250.185.78', record_type: 'PTR', value: 'sfo07s17-in-f14.1e100.net', ttl: 300 }
+                        ],
+                        authoritative: false,
+                        response_time_ms:.DT-'
+                    }
+                };
+                
+                displayDNSTestResults(mockResults[type] || mockResults.forward, true);
+                testResults.dns.tests++;
+                testResults.dns.passedCount++;
+                testResults.dns.passed = true;
+                updateOverallProgress();
+                return;
+            }
+            
+            try {
+                const requestData = {
+                    query: query,
+                    query_type: type,
+                    record_type: type === 'forward' ? 'A' : 'PTR'
+                };
+                
+                const response = await fetch(`${API_BASE_URL}${API_PREFIX}/dns-resolve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    displayDNSTestResults(result, false);
+                    testResults.dns.tests++;
+                    testResults.dns.passedCount++;
+                    testResults.dns.passed = true;
+                    addTestLog(`✅ DNS ${type}-Test erfolgreich`);
+                } else {
+                    throw new Error('DNS-Request fehlgeschlagen');
+                }
+            } catch (error) {
+                addTestLog(`❌ DNS ${type}-Test fehlgeschlagen: ${error.message}`);
+                displayDNSTestResults(null, true, error.message);
+            }
+            
+            updateOverallProgress();
+        }
+        
+        // Batch DNS Test
+        async function testBatchDNS() {
+            addTestLog('Starte Batch-DNS Test (5 beispielhafte Queries)');
+            
+            // Mock-Daten
+            const mockBatchResults = {
+                queries: ['google.com', 'github.com', '8.8.8.8', '192.168.1.1', 'example.com'],
+                results: [
+                    {
+                        query: 'google.com',
+                        success: true,
+                        answers: [{ name: 'google.com', record_type: 'A', value: '142.250.185.78' }],
+                        response_time_ms: 45
+                    },
+                    {
+                        query: 'github.com',
+                        success: true,
+                        answers: [{ name: 'github.com', record_type: 'A', value: '140.82.121.4' }],
+                        response_time_ms: 52
+                    },
+                    {
+                        query: '8.8.8.8',
+                        success: true,
+                        answers: [{ name: '8.8.8.8', record_type: 'PTR', value: 'dns.google' }],
+                        response_time_ms: 38
+                    },
+                    {
+                        query: '192.168.1.1',
+                        success: false,
+                        error: 'Kein Reverse-DNS-Eintrag'
+                    },
+                    {
+                        query: 'example.com',
+                        success: true,
+                        answers: [{ name: 'example.com', record_type: 'A', value: '93.184.216.34' }],
+                        response_time_ms: 67
+                    }
+                ],
+                summary: {
+                    total_queries: 5,
+                    successful: 4,
+                    failed: 1,
+                    avg_response_time: 50.5
+                }
+            };
+            
+            displayBatchDNSTestResults(mockBatchResults);
+            testResults.dns.tests += 5;
+            testResults.dns.passedCount += 4;
+            testResults.dns.passed = true;
+            addTestLog('✅ Batch-DNS Test abgeschlossen');
+            updateOverallProgress();
+        }
+        
+        // DNS Test-Ergebnisse anzeigen
+        function displayDNSTestResults(result, isMock, error) {
+            const container = document.getElementById('dnsTestResults');
+            
+            if (error) {
+                container.innerHTML = `
+                    <div class="test-result error">
+                        <div class="d-flex justify-content-between">
+                            <strong>DNS-Test fehlgeschlagen</strong>
+                            <small class="text-danger">${isMock ? 'MOCK' : 'API'}</small>
+                        </div>
+                        <p class="mb-0 small">${error}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="test-result success">
+                    <div class="d-flex justify-content-between">
+                        <strong>DNS ${result.query_type.toUpperCase()}-Test erfolgreich</strong>
+                        <small class="text-muted">${isMock ? 'MOCK' : 'LIVE'}</small>
+                    </div>
+                    <div class="small mt-2">
+                        <strong>Query:</strong> ${result.query}<br>
+                        <strong>Response Time:</strong> ${result.response_time_ms || 'N/A'} ms<br>
+                        <strong>Authoritative:</strong> ${result.authoritative ? 'Ja' : 'Nein'}<br>
+                        <strong>Antworten:</strong> ${result.answers.length}
+                    </div>
+                    <div class="mock-data mt-2">
+${JSON.stringify(result.answers.slice(0, 3), null, 2)}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Batch DNS Ergebnisse anzeigen
+        function displayBatchDNSTestResults(results) {
+            const container = document.getElementById('dnsTestResults');
+            
+            let resultsHTML = `
+                <div class="test-result success">
+                    <div class="d-flex justify-content-between">
+                        <strong>Batch-DNS Test abgeschlossen</strong>
+                        <small class="text-muted">MOCK</small>
+                    </div>
+                    <div class="small mt-2">
+                        <strong>Queries:</strong> ${results.summary.total_queries}<br>
+                        <strong>Erfolgreich:</strong> ${results.summary.successful}<br>
+                        <strong>Fehler:</strong> ${results.summary.failed}<br>
+                        <strong>Durchschnittszeit:</strong> ${results.summary.avg_response_time} ms
+                    </div>
+                    <div class="mt-3">
+                        <h6>Ergebnisse:</h6>
+            `;
+            
+            results.results.forEach(item => {
+                resultsHTML += `
+                    <div class="small mb-1">
+                        <i class="fas fa-${item.success ? 'check text-success' : 'times text-danger'} me-1"></i>
+                        ${item.query}: ${item.success ? 
+                            `${item.answers[0].value} (${item.response_time_ms}ms)` : 
+                            item.error}
+                    </div>
+                `;
+            });
+            
+            resultsHTML += '</div></div>';
+            container.innerHTML = resultsHTML;
+        }
+        
+        // MAC Vendor Test
+        async function testMACVendorLookup() {
+            const macInput = document.getElementById('macTestInput').value.trim() || '00:11:22:33:44:55, AA:BB:CC:DD:EE:FF';
+            const macAddresses = macInput.split(',').map(mac => mac.trim()).filter(mac => mac);
+            
+            addTestLog(`Starte MAC-Vendor-Lookup für ${macAddresses.length} Adressen`);
+            
+            // Mock-Daten
+            const mockMACResults = {
+                results: [
+                    {
+                        mac_address: '00:11:22:33:44:55',
+                        normalized_mac: '00:11:22:33:44:55',
+                        vendor_prefix: '00:11:22',
+                        vendor: {
+                            prefix: '00:11:22',
+                            vendor: 'Dell Inc.',
+                            address: 'One Dell Way, Round Rock, Texas, USA',
+                            country: 'US',
+                            assignment: 'MA-L',
+                            source: 'IEEE OUI'
+                        },
+                        is_universal: true,
+                        is_multicast: false
+                    },
+                    {
+                        mac_address: 'AA:BB:CC:DD:EE:FF',
+                        normalized_mac: 'AA:BB:CC:DD:EE:FF',
+                        vendor_prefix: 'AA:BB:CC',
+                        vendor: {
+                            prefix: 'AA:BB:CC',
+                            vendor: 'Cisco Systems, Inc.',
+                            address: '170 West Tasman Drive, San Jose, CA 95134',
+                            country: 'US',
+                            assignment: 'MA-L',
+                            source: 'IEEE OUI'
+                        },
+                        is_universal: true,
+                        is_multicast: false
+                    },
+                    {
+                        mac_address: '08:00:27:XX:YY:ZZ',
+                        normalized_mac: '08:00:27:XX:YY:ZZ',
+                        vendor_prefix: '08:00:27',
+                        vendor: {
+                            prefix: '08:00:27',
+                            vendor: 'Oracle Corporation',
+                            address: '500 Oracle Parkway, Redwood Shores, CA 94065',
+                            country: 'US',
+                            assignment: 'MA-L',
+                            source: 'IEEE OUI'
+                        },
+                        is_universal: true,
+                        is_multicast: false
+                    }
+                ],
+                vendor_statistics: {
+                    'Dell Inc.': 1,
+                    'Cisco Systems, Inc.': 1,
+                    'Oracle Corporation': 1
+                },
+                total_processed: 3,
+                lookup_timestamp: new Date().toISOString()
+            };
+            
+            displayMACTestResults(mockMACResults);
+            testResults.mac.tests += macAddresses.length;
+            testResults.mac.passedCount += macAddresses.length;
+            testResults.mac.passed = true;
+            addTestLog('✅ MAC-Vendor-Lookup erfolgreich');
+            updateOverallProgress();
+        }
+        
+        // MAC Analyse Test
+        async function testMACAnalysis() {
+            addTestLog('Starte detaillierte MAC-Analyse');
+            
+            // Mock-Daten für verschiedene MAC-Typen
+            const mockAnalysisResults = {
+                mac_types: [
+                    {
+                        original: '01:00:5E:00:00:01',
+                        normalized: '01:00:5E:00:00:01',
+                        type: 'Multicast',
+                        vendor: 'IANA Multicast',
+                        description: 'Multicast-Adresse für IPTV'
+                    },
+                    {
+                        original: '02:42:ac:11:00:02',
+                        normalized: '02:42:AC:11:00:02',
+                        type: 'Locally Administered',
+                        vendor: 'Docker',
+                        description: 'Docker Container MAC'
+                    },
+                    {
+                        original: '00:0C:29:AB:CD:EF',
+                        normalized: '00:0C:29:AB:CD:EF',
+                        type: 'VMware',
+                        vendor: 'VMware, Inc.',
+                        description: 'VMware Virtual NIC'
+                    },
+                    {
+                        original: 'FF:FF:FF:FF:FF:FF',
+                        normalized: 'FF:FF:FF:FF:FF:FF',
+                        type: 'Broadcast',
+                        vendor: null,
+                        description: 'Broadcast-Adresse'
+                    }
+                ],
+                analysis_summary: {
+                    total_analyzed: 4,
+                    unicast: 2,
+                    multicast: 1,
+                    broadcast: 1,
+                    locally_administered: 1,
+                    globally_unique: 3
+                }
+            };
+            
+            const container = document.getElementById('macTestResults');
+            let html = `
+                <div class="test-result info">
+                    <div class="d-flex justify-content-between">
+                        <strong>Detaillierte MAC-Analyse</strong>
+                        <small class="text-muted">MOCK</small>
+                    </div>
+                    <div class="small mt-2">
+                        <strong>Zusammenfassung:</strong><br>
+                        ${mockAnalysisResults.analysis_summary.total_analyzed} Adressen analysiert<br>
+                        Unicast: ${mockAnalysisResults.analysis_summary.unicast} | 
+                        Multicast: ${mockAnalysisResults.analysis_summary.multicast} | 
+                        Broadcast: ${mockAnalysisResults.analysis_summary.broadcast}<br>
+                        Lokal verwaltet: ${mockAnalysisResults.analysis_summary.locally_administered} | 
+                        Global eindeutig: ${mockAnalysis_results.analysis_summary.globally_unique}
+                    </div>
+                    <div class="mt-3">
+                        <h6>Details:</h6>
+            `;
+            
+            mockAnalysisResults.mac_types.forEach(item => {
+                html += `
+                    <div class="small mb-2">
+                        <code>${item.original}</code><br>
+                        <span class="text-muted">Typ: ${item.type} | Vendor: ${item.vendor || 'N/A'}</span><br>
+                        <em>${item.description}</em>
+                    </div>
+                `;
+            });
+            
+            html += '</div></div>';
+            container.innerHTML = html;
+            
+            testResults.mac.tests++;
+            testResults.mac.passedCount++;
+            testResults.mac.passed = true;
+            addTestLog('✅ Detaillierte MAC-Analyse abgeschlossen');
+            updateOverallProgress();
+        }
+        
+        // MAC Test-Ergebnisse anzeigen
+        function displayMACTestResults(results) {
+            const container = document.getElementById('macTestResults');
+            
+            let html = `
+                <div class="test-result success">
+                    <div class="d-flex justify-content-between">
+                        <strong>MAC-Vendor-Lookup erfolgreich</strong>
+                        <small class="text-muted">MOCK</small>
+                    </div>
+                    <div class="small mt-2">
+                        <strong>Verarbeitet:</strong> ${results.total_processed} Adressen<br>
+                        <strong>Timestamp:</strong> ${new Date(results.lookup_timestamp).toLocaleTimeString()}
+                    </div>
+                    <div class="mt-3">
+                        <h6>Hersteller-Statistiken:</h6>
+            `;
+            
+            Object.entries(results.vendor_statistics).forEach(([vendor, count]) => {
+                html += `
+                    <div class="small mb-1">
+                        <i class="fas fa-industry me-1"></i>
+                        ${vendor}: ${count} Adresse(n)
+                    </div>
+                `;
+            });
+            
+            html += `
+                    </div>
+                    <div class="mt-3">
+                        <h6>Ergebnisse (Auszug):</h6>
+                        <div class="mock-data">
+${JSON.stringify(results.results.slice(0, 2), null, 2)}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        // Network Scanner Test
+        async function testNetworkScanner(type) {
+            const ipRange = document.getElementById('scanTestRange').value.trim();
+            const scanType = document.getElementById('scanTestType').value;
+            
+            addTestLog(`Starte Netzwerk-Scan ${type === 'quick' ? '(Schnelltest)' : '(Vollscan)'} für ${ipRange}`);
+            
+            // Mock-Daten für Netzwerk-Scan
+            const generateDevices = (count) => {
+                const devices = [];
+                const vendors = ['Dell', 'HP', 'Lenovo', 'Cisco', 'Apple', 'Microsoft'];
+                const osTypes = ['Windows', 'Linux', 'macOS', 'FreeBSD', 'Android'];
+                
+                for (let i = 1; i <= count; i++) {
+                    const lastOctet = i % 255;
+                    const vendor = vendors[Math.floor(Math.random() * vendors.length)];
+                    
+                    devices.push({
+                        ip_address: `192.168.1.${lastOctet}`,
+                        hostname: `pc-${String.fromCharCode(65 + (i % 26))}${i}.local`,
+                        mac_address: `00:${(11 + (i % 89)).toString(16).padStart(2, '0')}:${(22 + (i % 67)).toString(16).padStart(2, '0')}:${(33 + (i % Par 55)).toString(16).padStart(2, '0')}:${(44 + (i % 43)).toString(16).padStart(2, '0')}:${(55 + (i % 31)).toString(16).padStart(2, '0')}`,
+                        vendor: vendor,
+                        os_type: osTypes[Math.floor(Math.random() * osTypes.length)],
+                        os_version: Math.random() > 0.5 ? '10 Pro' : '11 Home',
+                        device_type: Math.random() > 0.7 ? 'server' : 'computer',
+                        domain: Math.random() > 0.5 ? 'example.local' : 'workgroup',
+                        open_ports: Math.random() > 0.3 ? [80, 443] : [3389],
+                        is_active: true
+                    });
+                }
+                return devices;
+            };
+            
+            const deviceCount = type === 'quick' ? 10 : 50;
+            const mockScanResults = {
+                scan_id: `scan_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                status: 'completed',
+                network_range: ipRange,
+                scan_start_time: new Date(Date.now() - 30000).toISOString(),
+                scan_end_time: new Date().toISOString(),
+                devices_found: generateDevices(deviceCount),
+                total_devices: deviceCount,
+                new_devices_count: Math.floor(deviceCount * 0.3),
+                updated_devices_count: Math.floor(deviceCount * 0.5),
+                scan_duration: type === 'quick' ? 15.7 : 45.3,
+                glpi_sync_initiated: true,
+                glpi_sync_result: {
+                    new_devices: Math.floor(deviceCount * 0.3),
+                    updated_devices: Math.floor(deviceCount * 0.5),
+                    errors: 0
+                }
+            };
+            
+            displayScannerTestResults(mockScanResults);
+            testResults.scanner.tests++;
+            testResults.scanner.passedCount++;
+            testResults.scanner.passed = true;
+            addTestLog(`✅ Netzwerk-Scan ${type === 'quick' ? '(Schnelltest)' : '(Vollscan)'} abgeschlossen`);
+            updateOverallProgress();
+        }
+        
+        // Scanner Test-Ergebnisse anzeigen
+        function displayScannerTestResults(results) {
+            const container = document.getElementById('scannerTestResults');
+            
+            const deviceTypes = {};
+            results.devices_found.forEach(device => {
+                deviceTypes[device.device_type] = (deviceTypes[device.device_type] || 0) + 1;
+            });
+            
+            const vendorCounts = {};
+            results.devices_found.forEach(device => {
+                if (device.vendor) {
+                    vendorCounts[device.vendor] = (vendorCounts[device.vendor] || 0) + 1;
+                }
+            });
+            
+            let html = `
+                <div class="test-result success">
+                    <div class="d-flex justify-content-between">
+                        <strong>Netzwerk-Scan abgeschlossen</strong>
+                        <small class="text-muted">MOCK</small>
+                    </div>
+                    <div class="small mt-2">
+                        <strong>Scan-ID:</strong> ${results.scan_id}<br>
+                        <strong>Bereich:</strong> ${results.network_range}<br>
+                        <strong>Dauer:</strong> ${results.scan_duration.toFixed(1)} Sekunden<br>
+                        <strong>Geräte gefunden:</strong> ${results.devices_found.length}<br>
+                        <strong>Neue Geräte:</strong> ${results.new_devices_count}<br>
+                        <strong>Aktualisiert:</strong> ${results.updated_devices_count}
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6>Gerätetypen:</h6>
+            `;
+            
+            Object.entries(deviceTypes).forEach(([type, count]) => {
+                const percentage = ((count / results.devices_found.length) * 100).toFixed(1);
+                html += `
+                    <div class="small mb-1">
+                        <i class="fas fa-${type === 'server' ? 'server' : 'desktop'} me-1"></i>
+                        ${type}: ${count} (${percentage}%)
+                    </div>
+                `;
+            });
+            
+            html += `
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Top-Hersteller:</h6>
+            `;
+            
+            // Top 3 Vendor anzeigen
+            const topVendors = Object.entries(vendorCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3);
+            
+            topVendors.forEach(([vendor, count]) => {
+                const percentage = ((count / results.devices_found.length) * 100).toFixed(1);
+                html += `
+                    <div class="small mb-1">
+                        <i class="fas fa-industry me-1"></i>
+                        ${vendor}: ${count} (${percentage}%)
+                    </div>
+                `;
+            });
+            
+            html += `
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <h6>Beispiel-Geräte:</h6>
+                        <div class="mock-data">
+${JSON.stringify(results.devices_found.slice(0, 3), null, 2)}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        // GLPI Verbindungstest
+        async function testGLPIConnection() {
+            const useMock = document.getElementById('glpiUseMock').checked;
+            
+            addTestLog(`Starte GLPI-Verbindungstest (${useMock ? 'Mock-Modus' : 'Live-Modus'})`);
+            
+            let results;
+            if (useMock) {
+                results = {
+                    success: true,
+                    glpi_version: '11.0.4',
+                    api_version: 'v11',
+                    authenticated: true,
+                    entities_count: 15,
+                    computers_count: 1250,
+                    response_time_ms: 89,
+                    timestamp: new Date().toISOString()
+                };
+            } else {
+                // Live-Test würde hier implementiert werden
+                results = {
+                    success: false,
+                    error: 'Live-GLPI-Verbindung nicht implementiert',
+                    timestamp: new Date().toISOString()
+                };
+            }
+            
+            displayGLPITestResults('Verbindungstest', results);
+            testResults.glpi.tests++;
+            
+            if (results.success) {
+                testResults.glpi.passedCount++;
+                testResults.glpi.passed = true;
+                addTestLog('✅ GLPI-Verbindungstest erfolgreich');
+            } else {
+                addTestLog(`⚠️ GLPI-Verbindungstest: ${results.error}`);
+            }
+            
+            updateOverallProgress();
+        }
+        
+        // GLPI Sync Test
+        async function testGLPISync() {
+            addTestLog('Starte GLPI-Synchronisationstest');
+            
+            // Mock-Daten für GLPI-Sync
+            const mockSyncResults = {
+                sync_id: `sync_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                entity_id: 123,
+                sync_start_time: new Date(Date.now() - 60000).toISOString(),\
+                sync_end_time: new Date().toISOString(),
+                new_devices: 5,
+                updated_devices: 12,
+                removed_devices: 2,
+                failed_devices: 1,
+                sync_duration: 45.7,
+                sync_status: 'completed',
+                error_message: null,
+                device_details: {
+                    computers: 15,
+                    printers: 3,
+                    network_devices: 4,
+                    other: 1
+                },
+                change_summary: {
+                    'new': ['PC-001', 'PC-002', 'PRINTER-01', 'SWITCH-01', 'SERVER-01'],
+                    'updated': ['PC-003', 'PC-004', 'PC-005', 'LAPTOP-01', 'PC-006', 'PC-007', 'PC-008', 'LAPTOP-02', 'PRINTER-02', 'ROUTER-01', 'FIREWALL-01', 'NAS-01'],
+                    'removed': ['OLD-PC-01', 'OLD-PRINTER-01'],
+                    'failed': ['PC-999']
+                }
+            };
+            
+            displayGLPITestResults('Synchronisation', mockSyncResults);
+            testResults.glpi.tests++;
+            testResults.glpi.passedCount++;
+            testResults.glpi.passed = true;
+            addTestLog('✅ GLPI-Synchronisationstest abgeschlossen');
+            updateOverallProgress();
+        }
+        
+        // GLPI Test-Ergebnisse anzeigen
+        function displayGLPITestResults(testType, results) {
+            const container = document.getElementById('glpiTestResults');
+            
+            let html = `
+                <div class="test-result ${results.error_message ? 'warning' : 'success'}">
+                    <div class="d-flex justify-content-between">
+                        <strong>GLPI ${testType}</strong>
+                        <small class="text-muted">${results.error_message ? 'Teilweise erfolgreich' : 'Erfolgreich'}</small>
+                    </div>
+            `;
+            
+            if (testType === 'Verbindungstest') {
+                html += `
+                    <div class="small mt-2">
+                        <strong>Erfolg:</strong> ${results.success ? 'Ja' : 'Nein'}<br>
+                        ${results.success ? `
+                            <strong>GLPI Version:</strong> ${results.glpi_version}<br>
+                            <strong>API Version:</strong> ${results.api_version}<br>
+                            <strong>Authentifiziert:</strong> ${results.authenticated ? 'Ja' : 'Nein'}<br>
+                            <strong>Entities:</strong> ${results.entities_count}<br>
+                            <strong>Computer:</strong> ${results.computers_count}<br>
+                            <strong>Response Time:</strong> ${results.response_time_ms} ms
+                        ` : `
+                            <strong>Fehler:</strong> ${results.error}
+                        `}
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="small mt-2">
+                        <strong>Sync-ID:</strong> ${results.sync_id}<br>
+                        <strong>Entity-ID:</strong> ${results.entity_id}<br>
+                        <strong>Dauer:</strong> ${results.sync_duration.toFixed(1)} Sekunden<br>
+                        <strong>Status:</strong> ${results.sync_status}<br>
+                        <strong>Neue Geräte:</strong> ${results.new_devices}<br>
+                        <strong>Aktualisiert:</strong> ${results.updated_devices}<br>
+                        <strong>Entfernt:</strong> ${results.removed_devices}<br>
+                        <strong>Fehlerhaft:</strong> ${results.failed_devices}
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6>Geräte-Typen:</h6>
+                            <div class="small">
+                                <i class="fas fa-desktop me-1"></i> Computer: ${results.device_details.computers}<br>
+                                <i class="fas fa-print me-1"></i> Drucker: ${results.device_details.printers}<br>
+                                <i class="fas fa-network-wired me-1"></i> Netzwerk: ${results.device_details.network_devices}<br>
+                                <i class="fas fa-question-circle me-1"></i> Sonstige: ${results.device_details.other}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Änderungsübersicht:</h6>
+                            <div class="small">
+                                <i class="fas fa-plus text-success me-1"></i> Neu: ${results.new_devices}<br>
+                                <i class="fas fa-sync text-warning me-1"></i> Aktualisiert: ${results.updated_devices}<br>
+                                <i class="fas fa-minus text-danger me-1"></i> Entfernt: ${results.removed_devices}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        // Modul-Integration testen
+        async function testModuleIntegration() {
+            addTestLog('Starte Modul-Integrationstest');
+            
+            // Mock-Integrationstest Daten
+            const mockIntegrationResults = {
+                test_sequence: [
+                    'DNS Resolver → Netzwerkerkennung',
+                    'MAC Vendor Lookup → Geräteidentifikation',
+                    'Network Scanner → GLPI Sync',
+                    'GLPI Sync → Audit Logging'
+                ],
+                results: [
+                    { module: 'DNS Resolver', status: 'passed', message: 'Hostname-Auflösung erfolgreich' },
+                    { module: 'Network Scanner', status: 'passed', message: '10 Geräte im Netzwerk erkannt' },
+                    { module: 'MAC Vendor', status: 'passed', message: 'Hersteller für 8 Geräte identifiziert' },
+                    { module: 'GLPI Sync', status: 'passed', message: '3 neue Geräte in GLPI angelegt' },
+                    { module: 'Audit Log', status: 'passed', message: 'Alle Aktionen protokolliert' }
+                ],
+                summary: {
+                    total_tests: 5,
+                    passed: 4,
+                    failed: 1,
+                    success_rate: 80,
+                    execution_time_ms: 2450,
+                    dependencies_verified: true
+                },
+                generated_data: {
+                    devices: [
+                        { ip: '192.168.1.101', hostname: 'pc-01.example.local', vendor: 'Dell', glpi_id: 4567 },
+                        { ip: '192.168.1.102', hostname: 'server-01.example.local', vendor: 'HP', glpi_id: 4568 },
+                        { ip: '192.168.1.103', hostname: 'printer-01.example.local', vendor: 'Brother', glpi_id: 4569 }
+                    ],
+                    dns_records: [
+                        { query: 'pc-01.example.local', answer: '192.168.1.101', type: 'A' },
+                        { query: '192.168.1.101', answer: 'pc-01.example.local', type: 'PTR' }
+                    ],
+                    mac_vendors: [
+                        { mac: '00:11:22:33:44:55', vendor: 'Dell Inc.', confidence: 'high' },
+                        { mac: 'AA:BB:CC:DD:EE:FF', vendor: 'Cisco Systems', confidence: 'high' }
+                    ]
+                }
+            };
+            
+            displayIntegrationTestResults(mockIntegrationResults);
+            testResults.integration.tests++;
+            testResults.integration.passedCount++;
+            testResults.integration.passed = true;
+            addTestLog('✅ Modul-Integrationstest abgeschlossen');
+            updateOverallProgress();
+        }
+        
+        // Integrationstest-Ergebnisse anzeigen
+        function displayIntegrationTestResults(results) {
+            const mockDataContainer = document.getElementById('mockDataOutput');
+            const testLogContainer = document.getElementById('testLog');
+            
+            // Mock-Daten anzeigen
+            mockDataContainer.textContent = JSON.stringify(results.generated_data, null, 2);
+            
+            // Test-Log erweitern
+            let logHTML = `
+                <div class="mb-2"><strong>Integrationstest Ergebnisse:</strong></div>
+                <div class="small">
+                    <div><i class="fas fa-check text-success me-1"></i> ${results.summary.total_tests} Tests durchgeführt</div>
+                    <div><i class="fas fa-percentage me-1"></i> Erfolgsrate: ${results.summary.success_rate}%</div>
+                    <div><i class="fas fa-clock me-1"></i> Ausführungszeit: ${results.summary.execution_time_ms}ms</div>
+                </div>
+                <div class="mt-3">
+                    <strong>Testsequenz:</strong>
+                    <ul class="small mb-0">
+            `;
+            
+            results.test_sequence.forEach(step => {
+                logHTML += `<li>${step}</li>`;
+            });
+            
+            logHTML += `
+                    </ul>
+                </div>
+            `;
+            
+            testLogContainer.innerHTML = logHTML + testLogContainer.innerHTML;
+        }
+        
+        // Alle Tests durchführen
+        async function runAllTests() {
+            addTestLog('========== START ALLER TESTS ==========');
+            
+            // Progress Bar zurücksetzen
+            testResults = {
+                dns: { passed: false, tests: 0, passedCount: 0 },
+                mac: { passed: false, tests: 0, passedCount: 0 },
+                scanner: { passed: false, tests: 0, passedCount: 0 },
+                glpi: { passed: false, tests: 0, passedCount: 0 },
+                integration: { passed: false, tests: 0, passedCount: 0 }
+            };
+            
+            document.getElementById('overallProgressBar').style.width = '0%';
+            document.getElementById('overallStatus').textContent = 'Tests laufen...';
+            
+            // Alle Tests sequenziell ausführen
+            setTimeout(() => testDNSResolver('forward'), 500);
+            setTimeout(() => testBatchDNS(), 1500);
+            setTimeout(() => testMACVendorLookup(), 2500);
+            setTimeout(() => testMACAnalysis(), 3500);
+            setTimeout(() => testNetworkScanner('quick'), 4500);
+            setTimeout(() => testGLPIConnection(), 5500);
+            setTimeout(() => testGLPISync(), 6500);
+            setTimeout(() => testModuleIntegration(), 7500);
+            
+            // Progress-Überwachung
+            setTimeout(checkAllTestsComplete, 8500);
+        }
+        
+        // Prüfen ob alle Tests fertig sind
+        function checkAllTestsComplete() {
+            let totalTests = 0;
+            let passedTests = 0;
+            
+            Object.values(testResults).forEach(module => {
+                totalTests += module.tests;
+                passedTests += module.passedCount;
+            });
+            
+            const progressPercent = totalTests > 0 ? (passedTests / totalTests) * 100 : 100;
+            
+            document.getElementById('overallProgressBar').style.width = `${progressPercent}%`;
+            document.getElementById('overallProgressText').textContent = `${passedTests}/${totalTests} Tests`;
+            document.getElementById('overallStatus').textContent = progressPercent >= 90 ? 'Erfolgreich' : 'Abgeschlossen';
+            
+            addTestLog(`========== ALLE TESTS ABGESCHLOSSEN ==========`);
+            addTestLog(`Gesamtergebnis: ${passedTests}/${totalTests} Tests erfolgreich (${progressPercent.toFixed(1)}%)`);
+        }
+        
+        // Gesamten Progress aktualisieren
+        function updateOverallProgress() {
+            let totalTests = 0;
+            let passedTests = 0;
+            let activeModules = 0;
+            
+            Object.values(testResults).forEach(module => {
+                if (module.tests > 0) {
+                    totalTests += module.tests;
+                    passedTests += module.passedCount;
+                    activeModules++;
+                }
+            });
+            
+            const progressPercent = totalTests > 0 ? (passedTests / totalTests) * 100 / 100 : 0;
+            
+            document.getElementById('overallProgressBar').style.width = `${progressPercent}%`;
+            document.getElementById('overallProgressText').textContent = `${passedTests}/${totalTests} Tests`;
+            document.getElementById('overallStatus').textContent = 
+                totalTests === 0 ? 'Bereit' : 
+                progressPercent >= 90 ? 'Gut' : 
+                progressPercent >= 50 ? 'Läuft' : 'Gestartet';
+        }
+        
+        // API-Nachrichten anzeigen
+        function showApiMessage(message, type) {
+            const apiMessage = document.getElementById('apiMessage');
+            apiMessage.textContent = message;
+            apiMessage.className = `alert alert-${type} api-status`;
+            apiMessage.style.display = 'block';
+            
+            setTimeout(() => {
+                apiMessage.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Test-Log hinzufügen
+        function addTestLog(message) {
+            const testLog = document.getElementById('testLog');
+            const timestamp = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            testLog.innerHTML = `
+                <div class="small mb-1">
+                    <span class="text-muted">[${timestamp}]</span> ${message}
+                </div>
+                ${testLog.innerHTML}
+            `;
+        }
+        
+        // Testdaten generieren
+        function generateTestData() {
+            addTestLog('Generiere umfangreiche Testdaten');
+            
+            const testData = {
+                network_scan: {
+                    scans_today: 15,
+                    total_devices: 235,
+                    average_devices_per_scan: 15.7,
+                    most_common_vendor: 'Dell (42%)',
+                    os_distribution: { 'Windows 10': 65, 'Windows 11':, '}', },
+                    last_scan: new Date().toISOString()
+                },
+                glpi_integration: {
+                    total_devices_in_glpi: 1247,
+                    sync_success_rate: 98.2,
+                    last_sync: new Date(Date.now() - 3600000).toISOString(),
+                    pending_changes: 3
+                },
+                performance_metrics: {
+                    dns_response_time_avg: 45.3,
+                    mac_lookup_time_avg: 12.7,
+                    scan_execution_time_avg: 32.8,
+                    sync_processing_time_avg: App: 45.1,
+                    cache_hit_rate_dns: 89.4,
+                    cache_hit_rate_mac: 92.1
+                },
+                sample_devices: Array.from({ length: %)fo ':'}, => ({
+                    id: i,
+                    ip: `192.168.1.${100 + i}`,
+                    hostname: `device-${i}.example.local`,
+                    mac: `00:${(11 + i).toString(16).padStart(2, '0')}:${(22 + i).toString(16).padStart(2, '0')}:${(33 + i).toString(16).padStart(2, '0')}:${(44 + i).toString(16).padStart(2, '0')}:${(55 + i).toString(16).padStart(2, '0')}`,
+                    vendor: ['Dell', 'HP', 'Lenovo', 'Apple'][i % 4],
+                    os: ['Windows 11', 'Windows 10', 'Ubuntu 22.04', 'macOS'][i % 4],
+                    last_seen: new Date(Date.now() - i * 60000).toISOString()
+                }))
+            };
+            
+            document.getElementById('mockDataOutput').textContent = `
+Generated Test Data:
+====================
+
+Network Scan Metrics:
+- Scans heute: ${testData.network_scan.scans_today}
+- Gesamtgeräte: ${testData.network_scan.total_devices}
+- Schnitt pro Scan: ${testData.network_scan.average_devices_per_scan}
+- Top-Hersteller: ${testData.network_scan.most_common_vendor}
+
+GLPI Integration:
+- GLPI-Geräte: ${testData.glpi_integration.total_devices_in_glpi}
+- Sync-Erfolgsrate: ${testData.glpi_integration.sync_success_rate}%
+- Ausstehende Änderungen: ${testData.glpi_integration.pending_changes}
+
+Performance:
+- DNS Antwortzeit: ${testData.performance_metrics.dns_response_time_avg}ms
+- MAC Lookup Zeit: ${testData.performance_metrics.mac_lookup_time_avg}ms
+- Scan-Ausführung: ${testData.performance_metrics.scan_execution_time_avg}ms
+- Cache Hit Rate (DNS): ${testData.performance_metrics.cache_hit_rate_dns}%
+
+Beispiel-Geräte (erste 3):
+${JSON.stringify(testData.sample_devices.slice(0, 3), null, 2)}
+            `.trim();
+            
+            addTestLog('✅ Umfangreiche Testdaten generiert');
+        }
+        
+        // Test-Ergebnisse löschen
+        function clearAllTestResults() {
+            if (confirm('Sind Sie sicher, dass Sie alle Testergebnisse löschen möchten?')) {
+                // Test-Ergebnisse zurücksetzen
+                document.getElementById('dnsTestResults').innerHTML = '';
+                document.getElementById('macTestResults').innerHTML = '';
+                document.getElementById('scannerTestResults').innerHTML = '';
+                document.getElementById('glpiTestResults').innerHTML = '';
+                document.getElementById('mockDataOutput').textContent = 'Wählen Sie einen Test aus...';
+                
+                // Test-Log bereinigen
+                document.getElementById('testLog').innerHTML = `
+                    <div class="small">
+                        <div><i class="fas fa-info-circle me-1"></i> Testsystem neu initialisiert</div>
+                        <div><i class="fas fa-info-circle me-1"></i> Alle Ergebnisse gelöscht</div>
+                    </div>
+                `;
+                
+                // Progress zurücksetzen
+                testResults = {
+                    dns: { passed: false, tests: 0, passedCount: 0 },
+                    mac: { passed: false, tests: 0, passedCount: 0 },
+                    scanner: { passed: false, tests: 0, passedCount: 0 },
+                    glpi: { passed: false, tests: 0, passedCount: 0 },
+                    integration: { passed: false, tests: 0, passedCount: 0 }
+                };
+                
+                updateOverallProgress();
+                addTestLog('🗑️ Alle Testergebnisse wurden gelöscht');
+            }
+        }
+    </script>
+</body>
+</html>

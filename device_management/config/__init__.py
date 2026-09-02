@@ -38,11 +38,13 @@ class Settings(BaseSettings):
     # OCR Configuration
     ocr_language: str = "deu+eng"
     ocr_engine: str = "tesseract"  # tesseract, paddlocr, ocrmypdf
-    input_watch_path: str = "/mnt/samba/glpi-formulare/eingang"
-    processing_path: str = "/mnt/samba/glpi-formulare/in-bearbeitung"
-    done_path: str = "/mnt/samba/glpi-formulare/erledigt"
-    error_path: str = "/mnt/samba/glpi-formulare/fehler"
-    archive_path: str = "/mnt/samba/glpi-formulare/archiv"
+    ocr_preferred_engine: str = "tesseract"
+    ocr_input_watch_path: str = "/mnt/samba/glpi-formulare/eingang"
+    ocr_processing_path: str = "/mnt/samba/glpi-formulare/in-bearbeitung"
+    ocr_done_path: str = "/mnt/samba/glpi-formulare/erledigt"
+    ocr_error_path: str = "/mnt/samba/glpi-formulare/fehler"
+    ocr_archive_path: str = "/mnt/samba/glpi-formulare/archiv"
+    ocr_template_dir: str = "./ocr_templates"
     
     # Network Scanning
     default_scan_timeout: int = 5

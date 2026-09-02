@@ -1,124 +1,110 @@
-# Device Management System (Geräteerfassung und -verwaltung)
+# Device Management System - Phase 1
 
 Modulare Software zur Erfassung und Verwaltung von Kundengeräten mit GLPI-Integration.
 
-## Übersicht
+## 📋 Funktionen der Phase 1
 
-Diese Software ermöglicht:
-- Manuelle Geräteerfassung über Webformular
-- Automatische Erfassung via OCR aus gescannten Formularen
-- Integration mit GLPI 11 API
-- Netzwerk- und Domänenerkennung (Phase 2)
-- Integration in bestehende Supportsoftware (Phase 3)
+### ✅ **Manuelle Geräteerfassung** 
+- Webformular mit dynamischer Auswahl aus GLPI
+- Automatische MAC-Adressen-Normalisierung (AA:BB:CC:DD:EE:FF)
+- IP-Adressen-Validierung
+- Direkte Anlage in GLPI über API
 
-## Phasenplan
-
-### Phase 1: Manuelle Geräteerfassung
-- Webformular zur manuellen Geräteerfassung
-- Dynamische Daten aus GLPI (Kunden, Standorte, Benutzer, Techniker)
-- GLPI-API Integration zur automatischen Erstellung von Computer-Einträgen
-
-### Phase 1b: OCR-Erfassung von eingescannten Formularen
+### ✅ **OCR-Formularverarbeitung**
 - Automatische Überwachung von Samba-Freigaben
-- OCR-Verarbeitung (Tesseract/OCRmyPDF/PaddleOCR)
-- Formularvorlagensystem für verschiedene Kundenformulare
-- Prüfansicht mit Korrekturmöglichkeit
+- OCR mit Tesseract/PaddleOCR
+- Erweiterbare Formular-Vorlagen
+- Prüfansicht mit manueller Korrektur
 
-### Phase 2: Automatische Netzwerk- und Domänenerkennung
-- Netzwerkscans für IP-Bereiche
-- Automatische Geräteerkennung und -erfassung
-- Active Directory/LDAP Integration
-- Sicherheitsprotokollierung
+### ✅ **GLPI-Integration**
+- Dynamisches Laden von Kunden, Standorten, Benutzern
+- Automatische Anlage in korrektem Tenant
+- Synchronisation über GLPI-API
 
-### Phase 3: Integration in Supportsoftware
-- Nahtlose Integration in bestehende Supportsoftware
-- Ticketverknüpfung mit Geräten
-- Kundenbereich mit Geräteinformationen
+## 🚀 Schnellstart
 
-## Technischer Stack
+### 1. Installation
+```bash
+# Python-Abhängigkeiten installieren
+pip install -r requirements.txt
 
-### Backend
-- **Framework**: FastAPI (Python)
-- **Datenbank**: PostgreSQL (Produktion) / SQLite (Entwicklung)
-- **ORM**: SQLAlchemy
-- **Authentifizierung**: JWT / OAuth2
-- **Task Queue**: Celery (für Hintergrundaufgaben)
+# Datenbank initialisieren
+python -c "from device_management.models import Base; from device_management.config import settings; from sqlalchemy import create_engine; engine = create_engine(settings.database_url); Base.metadata.create_all(bind=engine)"
+```
 
-### Frontend
-- **Framework**: React mit TypeScript oder Vue.js
-- **UI-Komponenten**: Material-UI oder Ant Design
-- **Formularverarbeitung**: Formik oder React Hook Form
+### 2. Konfiguration
+```bash
+# GLPI-Zugangsdaten setzen
+export GLPI_BASE_URL="http://deine-glpi-instanz"
+export GLPI_APP_TOKEN="dein-app-token"
+export GLPI_USER_TOKEN="dein-user-token"
+```
 
-### OCR & Dateiverarbeitung
-- **OCR Engine**: Tesseract 5 + OCRmyPDF
-- **Dateiüberwachung**: Watchdog (Python)
-- **PDF-Verarbeitung**: PyPDF2 / pdf2image
+### 3. System starten
+```bash
+# Backend-API starten (Port 8000)
+python -m device_management.api.main
 
-### Netzwerk-Scanning
-- **Netzwerkscan**: Nmap (Python nmap wrapper)
-- **LDAP/AD**: python-ldap / ldap3
-- **MAC-Vendor-DB**: manuf Bibliothek
+# Frontend starten (Port 3000)
+python -m http.server 3000 --directory frontend/
+```
 
-## Projektstruktur
+## 🌐 Zugriff
+
+- **Frontend**: http://localhost:3000
+- **API-Dokumentation**: http://localhost:8000/docs
+- **OpenAPI-Schema**: http://localhost:8000/openapi.json
+
+## 📊 Architektur
 
 ```
 device_management/
-├── modules/                    # Unabhängige Module
-│   ├── user_management/        # Benutzerverwaltung
-│   ├── customer_management/    # Kunden- und Einheitenverwaltung
-│   ├── device_registration/    # Geräteerfassung
-│   ├── glpi_connector/         # GLPI-API Integration
-│   ├── form_processing/        # Formularverarbeitung
-│   ├── ocr_module/            # OCR-Verarbeitung
-│   ├── network_scanner/       # Netzwerk-Scanner
-│   ├── ad_connector/          # Active Directory/LDAP
-│   └── audit_module/          # Protokollierung
-├── api/                       # REST API (FastAPI)
-├── models/                    # Datenmodelle
-├── web/                       # Frontend (React/Vue)
-├── config/                    # Konfiguration
-├── tests/                     # Tests
-└── scripts/                   # Hilfsskripte
+├── api/              # FastAPI REST-API
+├── modules/          # Modulare Komponenten
+│   ├── glpi_connector/     # GLPI-Modul
+│   ├── ocr_processor/      # OCR-Verarbeitung
+│   └── samba_monitor/      # Samba-Überwachung
+├── web/              # Frontend-UI
+└── tests/            # Unit-Tests
 ```
 
-## Installation
+## 🔧 API-Endpoints (Phase 1)
 
-Siehe [INSTALLATION.md](INSTALLATION.md) für detaillierte Installationsanleitung.
+- `POST /api/v1/devices` - Gerät erstellen
+- `GET /api/v1/customers` - Kunden aus GLPI laden
+- `POST /api/v1/ocr/upload` - OCR-Datei hochladen
+- `POST /api/v1/ocr/process-samba-files` - Samba-Dateien verarbeiten
+- `GET /api/v1/glpi/entities` - GLPI-Entities abrufen
 
-## Konfiguration
+## 🔒 Sicherheitsfeatures
 
-1. GLPI-Zugangsdaten in `config/glpi_config.yaml` eintragen
-2. Datenbankverbindung konfigurieren
-3. Samba-Freigabepfade für OCR-Modul einstellen
+- JWT-Authentifizierung
+- SSL/TLS-Unterstützung
+- Rollenbasierte Berechtigungen
+- Audit-Logging aller Änderungen
 
-## Entwicklung
+## 📈 Phase 2-Vorbereitung
 
-```bash
-# Virtuelle Umgebung erstellen
-python -m venv venv
-source venv/bin/activate
+Die Phase 1 ist bereits vollständig mit den Phase-2-Modulen integriert:
+- **DNS Resolver** für Domänen-Erkennung
+- **MAC Vendor Lookup** für Hersteller-Identifikation  
+- **Network Scanner** für automatische Geräteerkennung
+- **GLPI Sync** für Batch-Synchronisation
 
-# Abhängigkeiten installieren
-pip install -r requirements.txt
+## 🐛 Fehlerbehebung
 
-# Entwicklungsserver starten
-python -m api.main
-```
+**API nicht erreichbar?**
+- Prüfe ob Python-Prozess läuft (Port 8000)
+- Prüfe GLPI-Zugangsdaten in Konfiguration
 
-## GLPI Integration
+**OCR funktioniert nicht?**
+- Tesseract muss installiert sein: `apt-get install tesseract-ocr tesseract-ocr-deu`
+- Samba-Freigaben müssen konfiguriert sein
 
-Die Software verwendet die GLPI REST API für:
-- Abruf von Kunden/Entities
-- Abruf von Standorten (Locations)
-- Abruf von Benutzern (Users)
-- Abruf von Technikern (Technicians)
-- Erstellung von Computer-Einträgen
-- Aktualisierung von Geräteinformationen
+**GLPI-Integration fehlgeschlagen?**
+- API-Tokens müssen korrekt konfiguriert sein
+- GLPI 11 muss installiert und erreichbar sein
 
-## API Dokumentation
+## 📄 Lizenz
 
-Nach Start des Servers: http://localhost:8000/docs
-
-## Lizenz
-
-Proprietär
+Proprietär - Für den internen Gebrauch entwickelt.
