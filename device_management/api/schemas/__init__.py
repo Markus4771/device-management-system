@@ -234,6 +234,8 @@ class OCRProcessResult(BaseModel):
     extracted_data: Dict[str, Any] = Field(default_factory=dict)
     raw_text_preview: Optional[str] = None
     template_applied: Optional[str] = None
+    source_file_url: Optional[str] = None
+    source_file_type: Optional[str] = None
     
     class Config:
         from_attributes = True
