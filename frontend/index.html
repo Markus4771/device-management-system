@@ -371,6 +371,18 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="computerType" class="form-label">Typ</label>
+                                            <select class="form-select" id="computerType">
+                                                <option value="">Typ auswählen...</option>
+                                            </select>
+                                            <div class="field-description">Computer-Typ direkt aus GLPI</div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             
                             <!-- Netzwerkinformationen -->
@@ -598,7 +610,8 @@
             locations: [],
             users: [],
             technicians: [],
-            manufacturers: []
+            manufacturers: [],
+            computerTypes: []
         };
 
         // DOM Elemente
@@ -614,6 +627,7 @@
         const userSelect = document.getElementById('user');
         const technicianSelect = document.getElementById('technician');
         const manufacturerSelect = document.getElementById('manufacturer');
+        const computerTypeSelect = document.getElementById('computerType');
         const macAddressInput = document.getElementById('macAddress');
 
         // Initialisierung
@@ -801,6 +815,11 @@
                 const manufacturersResponse = await fetch(`${API_BASE_URL}${API_PREFIX}/glpi/manufacturers`);
                 glpiData.manufacturers = manufacturersResponse.ok ? await manufacturersResponse.json() : [];
                 populateManufacturerSelect(glpiData.manufacturers);
+
+                // Computer-Typen aus GLPI laden
+                const computerTypesResponse = await fetch(`${API_BASE_URL}${API_PREFIX}/glpi/computer-types`);
+                glpiData.computerTypes = computerTypesResponse.ok ? await computerTypesResponse.json() : [];
+                populateComputerTypeSelect(glpiData.computerTypes);
                 
                 showApiMessage('GLPI-Daten erfolgreich geladen', 'success');
                 
@@ -852,7 +871,7 @@
             users.forEach(user => {
                 const option = document.createElement('option');
                 option.value = user.id;
-                option.textContent = `${user.full_name || user.realname || user.firstname || user.name} (${user.email})`;
+                option.textContent = user.full_name || [user.firstname, user.realname].filter(Boolean).join(' ') || user.name;
                 userSelect.appendChild(option);
             });
         }
@@ -885,6 +904,20 @@
             newOption.value = '__new__';
             newOption.textContent = '＋ Neuen Hersteller hinzufügen...';
             manufacturerSelect.appendChild(newOption);
+        }
+
+        // Computer-Typ-Select füllen
+        function populateComputerTypeSelect(computerTypes) {
+            computerTypeSelect.innerHTML = '<option value="">Typ auswählen...</option>';
+            computerTypes
+                .filter(computerType => computerType && computerType.id && computerType.name)
+                .sort((a, b) => a.name.localeCompare(b.name, 'de'))
+                .forEach(computerType => {
+                    const option = document.createElement('option');
+                    option.value = computerType.id;
+                    option.textContent = computerType.name;
+                    computerTypeSelect.appendChild(option);
+                });
         }
 
         // Neuen Hersteller direkt in GLPI anlegen
@@ -990,6 +1023,7 @@
                     manufacturers_id: formData.manufacturer_id,
                     manufacturer: formData.manufacturer,
                     model: formData.model,
+                    computertypes_id: computerTypeSelect.value ? Number(computerTypeSelect.value) : null,
                     users_id: formData.user ? Number(formData.user) : null,
                     users_id_tech: formData.technician ? Number(formData.technician) : null,
                     contact: formData.user,
