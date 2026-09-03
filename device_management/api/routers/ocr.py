@@ -144,9 +144,7 @@ ocr_manager = OCRManager()
 
 
 @router.get("/ocr/status", response_model=Dict[str, Any], tags=["OCR Processing"])
-async def get_ocr_status(
-    current_user = Depends(get_current_active_user)
-):
+async def get_ocr_status():
     """
     Gibt den Status des OCR-Services zurück.
     """
@@ -204,8 +202,7 @@ async def stop_ocr_service(
 @router.post("/ocr/process-upload", response_model=OCRProcessResult, tags=["OCR Processing"])
 async def process_uploaded_file(
     file: UploadFile = File(...),
-    template_id: Optional[str] = None,
-    current_user = Depends(get_current_active_user)
+    template_id: Optional[str] = None
 ):
     """
     Lädt eine Datei hoch und verarbeitet sie mit OCR.
@@ -247,9 +244,7 @@ async def process_uploaded_file(
 
 
 @router.get("/ocr/templates", response_model=List[OCRTemplateInfo], tags=["OCR Processing"])
-async def get_available_templates(
-    current_user = Depends(get_current_active_user)
-):
+async def get_available_templates():
     """
     Gibt alle verfügbaren Formularvorlagen zurück.
     """
@@ -279,10 +274,7 @@ async def get_available_templates(
 
 
 @router.get("/ocr/results/{file_hash}", response_model=Dict[str, Any], tags=["OCR Processing"])
-async def get_ocr_result(
-    file_hash: str,
-    current_user = Depends(get_current_active_user)
-):
+async def get_ocr_result(file_hash: str):
     """
     Gibt OCR-Verarbeitungsergebnisse für eine spezifische Datei zurück.
     """
@@ -300,8 +292,7 @@ async def get_ocr_result(
 @router.get("/ocr/results", response_model=Dict[str, Any], tags=["OCR Processing"])
 async def get_all_ocr_results(
     limit: int = 50,
-    offset: int = 0,
-    current_user = Depends(get_current_active_user)
+    offset: int = 0
 ):
     """
     Gibt eine Seite von OCR-Verarbeitungsergebnissen zurück.
