@@ -26,6 +26,7 @@ class GLPIComputerCreateRequest(BaseModel):
     contact: Optional[str] = None
     contact_num: Optional[str] = None
     operatingsystems_id: Optional[int] = None
+    operating_system: Optional[str] = None
     manufacturers_id: Optional[int] = None
     computermodels_id: Optional[int] = None
     users_id: Optional[int] = None
@@ -57,8 +58,13 @@ async def create_glpi_computer(data: GLPIComputerCreateRequest):
                 computer_data["manufacturers_id"] = client.find_or_create_reference("Manufacturer", data.manufacturer)
             if data.model and not data.computermodels_id:
                 computer_data["computermodels_id"] = client.find_or_create_reference("ComputerModel", data.model)
+            if data.operating_system and not data.operatingsystems_id:
+                computer_data["operatingsystems_id"] = client.find_or_create_reference(
+                    "OperatingSystem", data.operating_system
+                )
             computer_data.pop("manufacturer", None)
             computer_data.pop("model", None)
+            computer_data.pop("operating_system", None)
             computer_data.pop("inventory_number", None)
             computer_id = client.create_computer({k: v for k, v in computer_data.items() if v is not None})
             if not computer_id:
