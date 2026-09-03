@@ -188,12 +188,15 @@ class GLPIAPIClient:
             response = self.client.post(
                 "/Computer",
                 headers=self._get_headers(),
-                json=computer_data
+                json={"input": computer_data}
             )
-            
+
             if response.status_code in (200, 201):
                 data = response.json()
-                return data.get("id")
+                if isinstance(data, dict):
+                    return data.get("id")
+                if isinstance(data, list) and data and isinstance(data[0], dict):
+                    return data[0].get("id")
             else:
                 logger.error(f"Fehler beim Erstellen des Computers: {response.status_code} - {response.text}")
                 return None
@@ -208,9 +211,9 @@ class GLPIAPIClient:
             response = self.client.put(
                 f"/Computer/{computer_id}",
                 headers=self._get_headers(),
-                json=computer_data
+                json={"input": computer_data}
             )
-            
+
             return response.status_code in (200, 204)
                 
         except Exception as e:
