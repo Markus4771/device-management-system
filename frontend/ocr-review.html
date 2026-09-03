@@ -39,6 +39,13 @@
               <label class="form-label" for="ocrFile">PDF oder Bild</label>
               <input class="form-control" id="ocrFile" type="file" accept=".pdf,.jpg,.jpeg,.png,.tif,.tiff,.bmp" required>
               <div class="form-text">Unterstützt PDF, JPG, PNG, TIFF und BMP.</div>
+              <div class="form-check mt-2">
+                <input class="form-check-input" id="handwritingMode" type="checkbox">
+                <label class="form-check-label" for="handwritingMode">
+                  Handschriftliche Druckbuchstaben verbessern
+                </label>
+                <div class="form-text">Für sauber geschriebene Blockbuchstaben. Bitte die Erkennung anschließend kontrollieren.</div>
+              </div>
             </div>
             <div class="col-md-4">
               <button class="btn btn-primary w-100" type="submit">OCR starten</button>
@@ -144,6 +151,7 @@ document.getElementById('uploadForm').addEventListener('submit', async event => 
   if (!file) return;
   const body = new FormData();
   body.append('file', file);
+  if (document.getElementById('handwritingMode').checked) body.append('handwriting_mode', 'true');
   document.getElementById('busy').style.display = 'block';
   document.getElementById('resultCard').style.display = 'none';
   document.getElementById('sourceCard').style.display = 'none';
