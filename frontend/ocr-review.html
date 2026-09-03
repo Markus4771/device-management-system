@@ -44,7 +44,14 @@
                 <label class="form-check-label" for="handwritingMode">
                   Handschriftliche Druckbuchstaben verbessern
                 </label>
-                <div class="form-text">Für sauber geschriebene Blockbuchstaben. Bitte die Erkennung anschließend kontrollieren.</div>
+                <div class="form-text">Feste Arbeitsplatzrechner-Vorlage mit Positionsauswertung.</div>
+              </div>
+              <div class="form-check mt-2">
+                <input class="form-check-input" id="trocrMode" type="checkbox">
+                <label class="form-check-label" for="trocrMode">
+                  TrOCR-Handschriftmodell verwenden
+                </label>
+                <div class="form-text">Benötigt die optionale Installation von <code>requirements-ocr-handwriting.txt</code>.</div>
               </div>
             </div>
             <div class="col-md-4">
@@ -152,6 +159,7 @@ document.getElementById('uploadForm').addEventListener('submit', async event => 
   const body = new FormData();
   body.append('file', file);
   if (document.getElementById('handwritingMode').checked) body.append('handwriting_mode', 'true');
+  if (document.getElementById('trocrMode').checked) body.append('use_trocr', 'true');
   document.getElementById('busy').style.display = 'block';
   document.getElementById('resultCard').style.display = 'none';
   document.getElementById('sourceCard').style.display = 'none';
@@ -182,6 +190,9 @@ document.getElementById('uploadForm').addEventListener('submit', async event => 
     const confidence = Number(result.ocr_confidence || 0);
     const confidencePercent = confidence <= 1 ? confidence * 100 : confidence;
     document.getElementById('confidence').textContent = confidence ? 'Sicherheit: ' + confidencePercent.toFixed(1) + '%' : 'Sicherheit nicht verfügbar';
+    if (confidencePercent < 60) {
+      showMessage('Warnung: Die Erkennungssicherheit ist niedrig. Bitte alle Felder anhand des Originals prüfen.', 'warning');
+    }
     document.getElementById('rawText').textContent = result.raw_text_preview || 'Kein Rohtext zurückgegeben.';
     document.getElementById('resultCard').style.display = 'block';
     document.getElementById('rawCard').style.display = 'block';
