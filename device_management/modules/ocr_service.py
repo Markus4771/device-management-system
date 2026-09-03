@@ -147,7 +147,7 @@ class OCRService:
                 self._on_new_file_detected(file_path)
                 time.sleep(0.5)  # Kleine Pause zwischen Dateien
     
-    def process_file(self, file_path: Path, template_id: Optional[str] = None) -> Dict[str, Any]:
+    def process_file(self, file_path: Path, template_id: Optional[str] = None, handwriting_mode: bool = False) -> Dict[str, Any]:
         """
         Verarbeitet eine einzelne Datei komplett.
         
@@ -166,7 +166,7 @@ class OCRService:
             # Wenn keine Template-ID gegeben, automatisch bestimmen
             if template_id is None:
                 # OCR-Text vorab extrahieren für Template-Erkennung
-                initial_result = self.ocr_processor.process_file(file_path)
+                initial_result = self.ocr_processor.process_file(file_path, handwriting_mode=handwriting_mode)
                 ocr_text = initial_result.get("ocr_text", "")
                 
                 # Beste passende Vorlage finden
