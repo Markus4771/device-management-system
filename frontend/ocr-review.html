@@ -52,6 +52,14 @@
       </div>
     </div>
 
+    <div id="sourceCard" class="card mb-4" style="display:none;">
+      <div class="card-header">Originaldatei</div>
+      <div class="card-body">
+        <div id="sourcePreview" class="border rounded bg-light p-2 text-center"></div>
+        <a id="sourceDownload" class="btn btn-outline-secondary btn-sm mt-3" target="_blank" rel="noopener">Originaldatei öffnen / herunterladen</a>
+      </div>
+    </div>
+
     <div id="resultCard" class="card mb-4">
       <div class="card-header d-flex justify-content-between align-items-center">
         <span>2. Erkennung prüfen und korrigieren</span>
@@ -145,6 +153,19 @@ document.getElementById('uploadForm').addEventListener('submit', async event => 
     if (!response.ok) throw new Error(result.detail || 'OCR-Verarbeitung fehlgeschlagen');
     latestResult = result;
     renderFields(result.extracted_data || {});
+    const sourceUrl = result.source_file_url || '';
+    const sourceType = result.source_file_type || '';
+    if (sourceUrl) {
+      const preview = document.getElementById('sourcePreview');
+      preview.innerHTML = '';
+      if (sourceType === 'application/pdf' || /\\.pdf$/i.test(sourceUrl)) {
+        preview.innerHTML = '<iframe src="' + sourceUrl + '" title="Original-PDF" style="width:100%;height:620px;border:0;"></iframe>';
+      } else {
+        preview.innerHTML = '<img src="' + sourceUrl + '" alt="Originaldokument" style="max-width:100%;max-height:620px;">';
+      }
+      document.getElementById('sourceDownload').href = sourceUrl;
+      document.getElementById('sourceCard').style.display = 'block';
+    }
     const confidence = Number(result.ocr_confidence || 0);
     document.getElementById('confidence').textContent = confidence ? 'Sicherheit: ' + (confidence * 100).toFixed(1) + '%' : 'Sicherheit nicht verfügbar';
     document.getElementById('rawText').textContent = result.raw_text_preview || 'Kein Rohtext zurückgegeben.';
@@ -166,6 +187,7 @@ document.getElementById('transferButton').addEventListener('click', () => {
 document.getElementById('newButton').addEventListener('click', () => {
   document.getElementById('ocrFile').value = '';
   document.getElementById('resultCard').style.display = 'none';
+  document.getElementById('sourceCard').style.display = 'none';
   document.getElementById('rawCard').style.display = 'none';
   document.getElementById('message').innerHTML = '';
 });
