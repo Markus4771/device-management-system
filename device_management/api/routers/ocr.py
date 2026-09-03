@@ -113,11 +113,18 @@ class OCRManager:
             result = self.service.ocr_processor.process_file(
                 source_path,
                 effective_template_id,
-                handwriting_mode=handwriting_mode
+                handwriting_mode=handwriting_mode,
+                use_trocr=use_trocr
             )
             template = self.service.template_manager.get_template(effective_template_id)
             if template and result.get("ocr_text"):
                 result["extracted_data"] = template.extract_fields(result["ocr_text"])
+            layout_fields = {
+                key: value for key, value in result.get("layout_fields", {}).items()
+                if not key.startswith("_") and value
+            }
+            if layout_fields:
+                result.setdefault("extracted_data", {}).update(layout_fields)
             result["template_id"] = effective_template_id
             result["source_file_name"] = review_name
             result["source_file_type"] = file.content_type or "application/octet-stream"
@@ -218,7 +225,8 @@ async def stop_ocr_service(
 async def process_uploaded_file(
     file: UploadFile = File(...),
     template_id: Optional[str] = Form(None),
-    handwriting_mode: bool = Form(False)
+    handwriting_mode: bool = Form(False),
+    use_trocr: bool = Form(False)
 ):
     """
     Lädt eine Datei hoch und verarbeitet sie mit OCR.
