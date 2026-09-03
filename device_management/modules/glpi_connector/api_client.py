@@ -19,15 +19,15 @@ class GLPIAPIClient:
         self.app_token = settings.glpi_app_token
         self.user_token = settings.glpi_user_token
         
+        # Session Token muss vor dem Aufbau der Header initialisiert werden.
+        self.session_token: Optional[str] = None
+
         # HTTP Client mit Session-Token
         self.client = httpx.Client(
             base_url=f"{self.base_url}/apirest.php",
             timeout=30.0,
             headers=self._get_headers()
         )
-        
-        # Session Token (nach InitSession)
-        self.session_token: Optional[str] = None
     
     def _get_headers(self) -> Dict[str, str]:
         """Erstellt HTTP Header für GLPI API"""
