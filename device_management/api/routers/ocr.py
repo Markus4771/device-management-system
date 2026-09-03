@@ -8,7 +8,7 @@ import logging
 from typing import List, Optional, Dict, Any
 from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, BackgroundTasks
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 
 from ..dependencies import get_current_active_user, get_current_superuser
 from ...modules.ocr_service import OCRService
@@ -94,30 +94,23 @@ class OCRManager:
             Verarbeitungsergebnisse
         """
         try:
-            # Temporäre Datei erstellen
-            import tempfile
+            # Originaldatei für die Kontrollansicht im Bearbeitungsordner ablegen.
             import uuid
             
-            file_ext = Path(file.filename).suffix if file.filename else ".tmp"
-            temp_file_name = f"{uuid.uuid4()}{file_ext}"
+            file_ext = Path(file.filename).suffix.lower() if file.filename else ".tmp"
+            review_name = f"review-{uuid.uuid4().hex}{file_ext}"
+            review_dir = Path(settings.ocr_processing_path)
+            review_dir.mkdir(parents=True, exist_ok=True)
+            source_path = review_dir / review_name
             
-            with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as temp_file:
-                # Dateiinhalt schreiben
-                content = file.file.read()
-                temp_file.write(content)
-                temp_path = Path(temp_file.name)
+            content = file.file.read()
+            source_path.write_bytes(content)
+            logger.info(f"Uploaded OCR source file {file.filename} to {source_path}")
             
-            logger.info(f"Uploaded file {file.filename} to {temp_path}")
-            
-            # OCR-Verarbeitung durchführen
-            result = self.service.process_file(temp_path, template_id)
-            
-            # Temporäre Datei bereinigen
-            try:
-                temp_path.unlink()
-            except Exception as e:
-                logger.warning(f"Could not delete temp file {temp_path}: {e}")
-            
+            # OCR-Verarbeitung durchführen; die Originaldatei bleibt für die Prüfung erhalten.
+            result = self.service.process_file(source_path, template_id)
+            result["source_file_name"] = review_name
+            result["source_file_type"] = file.content_type or "application/octet-stream"
             return result
             
         except Exception as e:
@@ -141,6 +134,18 @@ class OCRManager:
 
 
 ocr_manager = OCRManager()
+
+
+@router.get("/ocr/source/{file_name}", tags=["OCR Processing"])
+async def get_ocr_source_file(file_name: str):
+    """Liefert die Originaldatei für die interne OCR-Kontrollansicht."""
+    safe_name = Path(file_name).name
+    if safe_name != file_name or not safe_name.startswith("review-"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ungültiger OCR-Dateiname")
+    source_path = Path(settings.ocr_processing_path) / safe_name
+    if not source_path.is_file():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Originaldatei nicht gefunden")
+    return FileResponse(source_path)
 
 
 @router.get("/ocr/status", response_model=Dict[str, Any], tags=["OCR Processing"])
@@ -230,7 +235,9 @@ async def process_uploaded_file(
             processing_time=result.get("processing_completed"),
             extracted_data=result.get("extracted_data", {}),
             raw_text_preview=result.get("ocr_text", "")[:500] if result.get("ocr_text") else "",
-            template_applied=result.get("template_id")
+            template_applied=result.get("template_id"),
+            source_file_url=f"/api/v1/ocr/source/{result.get('source_file_name')}" if result.get("source_file_name") else None,
+            source_file_type=result.get("source_file_type")
         )
         
     except HTTPException:
