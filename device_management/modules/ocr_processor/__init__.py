@@ -256,19 +256,30 @@ class OCRProcessor:
                 output_type=pytesseract.Output.DICT
             )
             
-            # Text extrahieren
-            text_lines = []
+            # Text nach den erkannten Zeilen gruppieren. Die Zeilenstruktur ist
+            # für Formulare wichtig, weil der Wert oft über dem Feldlabel steht.
+            line_words = {}
             total_confidence = 0.0
             confidence_count = 0
             
             n_boxes = len(data['text'])
             for i in range(n_boxes):
-                if int(data['conf'][i]) > 0:  # Nur konfidente Ergebnisse berücksichtigen
-                    text_lines.append(data['text'][i])
-                    total_confidence += float(data['conf'][i])
+                try:
+                    confidence = float(data['conf'][i])
+                except (TypeError, ValueError):
+                    confidence = -1
+                text = (data['text'][i] or '').strip()
+                if confidence > 0 and text:
+                    line_key = (
+                        data.get('block_num', [0] * n_boxes)[i],
+                        data.get('par_num', [0] * n_boxes)[i],
+                        data.get('line_num', [i])[i]
+                    )
+                    line_words.setdefault(line_key, []).append(text)
+                    total_confidence += confidence
                     confidence_count += 1
             
-            ocr_text = ' '.join(text_lines)
+            ocr_text = '\\n'.join(' '.join(words) for words in line_words.values())
             avg_confidence = total_confidence / confidence_count if confidence_count > 0 else 0.0
             
             return ocr_text, avg_confidence
@@ -420,7 +431,7 @@ class OCRProcessor:
             logger.error(f"Error archiving {filename}: {e}")
             return False
     
-    def run_single_file(self, file_path: Path, template_id: Optional[str] = None) -> Dict[str, Any]:
+    def run_single_file(self, file_path: Path, template_id: Optional[str] = None, handwriting_mode: bool = False) -> Dict[str, Any]:
         """
         Verarbeitet eine einzelne Datei von Anfang bis Ende.
         
@@ -439,7 +450,7 @@ class OCRProcessor:
             return {"status": "error", "error": "Could not move file to processing"}
         
         # 2. OCR-Verarbeitung durchführen
-        result = self.process_file(processing_path, template_id)
+        result = self.process_file(processing_path, template_id, handwriting_mode=handwriting_mode)
         
         # 3. Finalisieren basierend auf Erfolg
         success = result.get("status") == "completed"
