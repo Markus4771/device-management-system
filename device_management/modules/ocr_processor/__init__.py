@@ -253,6 +253,20 @@ class OCRProcessor:
             import pytesseract
             from PIL import Image, ImageOps
             
+            # systemd kann einen reduzierten PATH verwenden. Tesseract
+            # deshalb auch über die üblichen absoluten Pfade suchen.
+            tesseract_cmd = shutil.which("tesseract")
+            if not tesseract_cmd:
+                for candidate in ("/usr/bin/tesseract", "/usr/local/bin/tesseract", "/bin/tesseract"):
+                    if Path(candidate).is_file():
+                        tesseract_cmd = candidate
+                        break
+            if not tesseract_cmd:
+                raise RuntimeError(
+                    "Tesseract fehlt. Bitte auf Debian 'apt-get install -y tesseract-ocr tesseract-ocr-deu tesseract-ocr-eng' ausführen."
+                )
+            pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
+            
             if isinstance(image, (str, Path)):
                 image = Image.open(image)
             
