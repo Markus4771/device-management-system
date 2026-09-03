@@ -107,8 +107,18 @@ class OCRManager:
             source_path.write_bytes(content)
             logger.info(f"Uploaded OCR source file {file.filename} to {source_path}")
             
-            # OCR-Verarbeitung durchführen; die Originaldatei bleibt für die Prüfung erhalten.
-            result = self.service.process_file(source_path, template_id, handwriting_mode=handwriting_mode)
+            # Upload direkt verarbeiten. Ein Upload liegt bereits im
+            # Bearbeitungsordner und darf nicht nochmals dorthin kopiert werden.
+            effective_template_id = template_id or "standard_customer_form"
+            result = self.service.ocr_processor.process_file(
+                source_path,
+                effective_template_id,
+                handwriting_mode=handwriting_mode
+            )
+            template = self.service.template_manager.get_template(effective_template_id)
+            if template and result.get("ocr_text"):
+                result["extracted_data"] = template.extract_fields(result["ocr_text"])
+            result["template_id"] = effective_template_id
             result["source_file_name"] = review_name
             result["source_file_type"] = file.content_type or "application/octet-stream"
             return result
