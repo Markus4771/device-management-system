@@ -182,6 +182,18 @@ class GLPIAPIClient:
             logger.error(f"Exception beim Abrufen der Technicians: {e}")
             return []
     
+    def get_computer_types(self) -> List[Dict]:
+        """Ruft Computer-Typen aus GLPI ab."""
+        try:
+            response = self.client.get("/ComputerType", headers=self._get_headers())
+            if response.status_code == 200:
+                data = response.json()
+                return data if isinstance(data, list) else []
+            logger.error("Fehler beim Abrufen der Computer-Typen: %s", response.status_code)
+        except Exception as exc:
+            logger.error("Exception beim Abrufen der Computer-Typen: %s", exc)
+        return []
+
     def get_manufacturers(self) -> List[Dict]:
         """Ruft Hersteller aus GLPI ab."""
         try:
