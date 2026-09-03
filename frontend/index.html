@@ -1039,9 +1039,7 @@
                 ip_address: document.getElementById('ipAddress').value.trim() || null,
                 domain: document.getElementById('domain').value.trim() || null,
                 teamviewer_id: document.getElementById('teamviewerId').value.trim() || null,
-                teamviewer_user_form: document.getElementById('teamviewerUserForm').value.trim() || null,
                 rustdesk_id: document.getElementById('rustdeskId').value.trim() || null,
-                rustdesk_user_form: document.getElementById('rustdeskUserForm').value.trim() || null,
                 netlock_rmm_agent: document.getElementById('netlockRmmAgent').checked,
                 antivirus: document.getElementById('antivirus').value || null,
                 notes: document.getElementById('notes').value.trim() || null,
@@ -1212,10 +1210,6 @@
             document.getElementById('localUser').value = document.getElementById('localUserForm').value;
             document.getElementById('localUserPassword').value = document.getElementById('localUserPasswordForm').value;
             document.getElementById('localAdminPassword').value = document.getElementById('localAdminPasswordForm').value;
-            document.getElementById('teamviewerUser').value = document.getElementById('teamviewerUserForm').value;
-            document.getElementById('rustdeskUser').value = document.getElementById('rustdeskUserForm').value;
-            document.getElementById('teamviewerPassword').value = document.getElementById('teamviewerPasswordForm')?.value || '';
-            document.getElementById('rustdeskPassword').value = document.getElementById('rustdeskPasswordForm')?.value || '';
             // Vom Techniker eingegebene Passwörter bleiben erhalten.
             if (!pcName) {
                 showApiMessage('Bitte zuerst den PC-Namen im Geräteformular eingeben.', 'error');
