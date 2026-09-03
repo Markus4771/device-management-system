@@ -182,6 +182,27 @@ class GLPIAPIClient:
             logger.error(f"Exception beim Abrufen der Technicians: {e}")
             return []
     
+    def find_or_create_reference(self, itemtype: str, name: str) -> Optional[int]:
+        """Findet ein GLPI-Referenzobjekt oder legt es bei Bedarf an."""
+        try:
+            response = self.client.get(f"/{itemtype}", params={"searchText": name})
+            if response.status_code == 200:
+                items = response.json()
+                if isinstance(items, list):
+                    for item in items:
+                        if str(item.get("name", "")).strip().lower() == name.strip().lower():
+                            return item.get("id")
+            response = self.client.post(f"/{itemtype}", json={"input": {"name": name}})
+            if response.status_code in (200, 201):
+                data = response.json()
+                if isinstance(data, dict):
+                    return data.get("id")
+                if isinstance(data, list) and data and isinstance(data[0], dict):
+                    return data[0].get("id")
+        except Exception as e:
+            logger.warning("GLPI reference %s could not be resolved: %s", itemtype, e)
+        return None
+
     def create_computer(self, computer_data: Dict) -> Optional[int]:
         """Erstellt einen neuen Computer in GLPI"""
         try:
