@@ -377,8 +377,7 @@ async def create_device_from_ocr(
 
 @router.post("/ocr/process-samba-files", tags=["OCR Processing"])
 async def process_existing_samba_files(
-    background_tasks: BackgroundTasks,
-    current_user = Depends(get_current_superuser)
+    background_tasks: BackgroundTasks
 ):
     """
     Verarbeitet vorhandene Dateien im Samba-Freigabe-Verzeichnis (Hintergrundtask).
