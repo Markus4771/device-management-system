@@ -232,8 +232,16 @@
                     <input type="password" class="form-control" id="localAdminPassword" autocomplete="new-password">
                 </div>
                 <div class="col-md-6 mb-3">
+                    <label for="teamviewerUser" class="form-label">TeamViewer-Benutzer</label>
+                    <input type="text" class="form-control" id="teamviewerUser" autocomplete="off">
+                </div>
+                <div class="col-md-6 mb-3">
                     <label for="teamviewerPassword" class="form-label">TeamViewer-Passwort</label>
                     <input type="password" class="form-control" id="teamviewerPassword" autocomplete="new-password">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="rustdeskUser" class="form-label">RustDesk-Benutzer</label>
+                    <input type="text" class="form-control" id="rustdeskUser" autocomplete="off">
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="rustdeskPassword" class="form-label">RustDesk-Passwort</label>
@@ -1187,8 +1195,10 @@
                 local_admin: document.getElementById('localAdmin').value.trim() || null,
                 local_admin_password: document.getElementById('localAdminPassword').value || null,
                 teamviewer_id: document.getElementById('teamviewerId').value.trim() || null,
+                teamviewer_user: document.getElementById('teamviewerUser').value.trim() || null,
                 teamviewer_password: document.getElementById('teamviewerPassword').value || null,
                 rustdesk_id: document.getElementById('rustdeskId').value.trim() || null,
+                rustdesk_user: document.getElementById('rustdeskUser').value.trim() || null,
                 rustdesk_password: document.getElementById('rustdeskPassword').value || null,
                 master_password: masterPassword
             };
