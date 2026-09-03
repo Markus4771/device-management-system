@@ -209,6 +209,51 @@
         </div>
     </div>
 
+    <!-- Zugangsdaten-Dialog -->
+    <div id="credentialsModal" class="login-modal">
+        <div class="login-modal-content p-4" style="max-width: 560px;">
+            <h4 class="mb-2"><i class="fas fa-key me-2"></i> Zugangsdaten & KeePass</h4>
+            <p class="text-muted">Die Zugangsdaten werden nicht in GLPI gespeichert. Es wird eine verschlüsselte KeePass-Datei für diesen Rechner erzeugt.</p>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="localUser" class="form-label">Lokaler Benutzer</label>
+                    <input type="text" class="form-control" id="localUser">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="localUserPassword" class="form-label">Passwort</label>
+                    <input type="password" class="form-control" id="localUserPassword" autocomplete="new-password">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="localAdmin" class="form-label">Lokaler Administrator</label>
+                    <input type="text" class="form-control" id="localAdmin">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="localAdminPassword" class="form-label">Passwort</label>
+                    <input type="password" class="form-control" id="localAdminPassword" autocomplete="new-password">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="teamviewerPassword" class="form-label">TeamViewer-Passwort</label>
+                    <input type="password" class="form-control" id="teamviewerPassword" autocomplete="new-password">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="rustdeskPassword" class="form-label">RustDesk-Passwort</label>
+                    <input type="password" class="form-control" id="rustdeskPassword" autocomplete="new-password">
+                </div>
+                <div class="col-12 mb-3">
+                    <label for="keepassMasterPassword" class="form-label required">KeePass-Masterpasswort</label>
+                    <input type="password" class="form-control" id="keepassMasterPassword" minlength="12" required autocomplete="new-password">
+                    <div class="field-description">Mindestens 12 Zeichen. Dieses Passwort wird nicht gespeichert.</div>
+                </div>
+            </div>
+            <div class="d-flex justify-content-between">
+                <button type="button" class="btn btn-secondary" onclick="hideCredentialsModal()">Abbrechen</button>
+                <button type="button" class="btn btn-primary" onclick="downloadKeepassFile()">
+                    <i class="fas fa-download me-1"></i> KeePass-Datei herunterladen
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Header -->
     <div class="header">
         <div class="container">
@@ -507,6 +552,9 @@
                         </button>
                         <button class="btn btn-outline-warning w-100 mb-2" onclick="showRecentDevices()">
                             <i class="fas fa-history me-1"></i> Letzte Geräte anzeigen
+                        </button>
+                        <button class="btn btn-outline-dark w-100 mb-2" onclick="showCredentialsModal()">
+                            <i class="fas fa-key me-1"></i> Zugangsdaten / KeePass
                         </button>
                         <button class="btn btn-outline-danger w-100" onclick="showLoginModal()">
                             <i class="fas fa-user-cog me-1"></i> Admin-Funktionen
@@ -1068,6 +1116,79 @@
         function showRecentDevices() {
             alert('Letzte Geräte Funktion wird implementiert...\n\nHier erscheint eine Liste der zuletzt erfassten Geräte.');
             // In der finalen Implementierung: Modal mit Geräteliste öffnen
+        }
+
+        // Zugangsdaten-Dialog anzeigen
+        function showCredentialsModal() {
+            const pcName = document.getElementById('pcName').value.trim();
+            if (!pcName) {
+                showApiMessage('Bitte zuerst den PC-Namen im Geräteformular eingeben.', 'error');
+                return;
+            }
+            document.getElementById('credentialsModal').style.display = 'block';
+        }
+
+        function hideCredentialsModal() {
+            document.getElementById('credentialsModal').style.display = 'none';
+        }
+
+        // Erzeugt eine verschlüsselte KeePass-Datei für genau diesen Rechner.
+        async function downloadKeepassFile() {
+            const masterPassword = document.getElementById('keepassMasterPassword').value;
+            if (masterPassword.length < 12) {
+                showApiMessage('Das KeePass-Masterpasswort muss mindestens 12 Zeichen lang sein.', 'error');
+                return;
+            }
+            const selectedCustomer = customerSelect.selectedOptions[0];
+            const selectedLocation = locationSelect.selectedOptions[0];
+            const selectedTechnician = technicianSelect.selectedOptions[0];
+            const payload = {
+                pc_name: document.getElementById('pcName').value.trim(),
+                customer: selectedCustomer?.textContent || null,
+                location: selectedLocation?.textContent || null,
+                serial_number: document.getElementById('serialNumber').value.trim() || null,
+                local_user: document.getElementById('localUser').value.trim() || null,
+                local_user_password: document.getElementById('localUserPassword').value || null,
+                local_admin: document.getElementById('localAdmin').value.trim() || null,
+                local_admin_password: document.getElementById('localAdminPassword').value || null,
+                teamviewer_id: document.getElementById('teamviewerId').value.trim() || null,
+                teamviewer_password: document.getElementById('teamviewerPassword').value || null,
+                rustdesk_id: document.getElementById('rustdeskId').value.trim() || null,
+                rustdesk_password: document.getElementById('rustdeskPassword').value || null,
+                master_password: masterPassword
+            };
+            if (!payload.local_user_password && !payload.local_admin_password &&
+                !payload.teamviewer_password && !payload.rustdesk_password) {
+                showApiMessage('Bitte mindestens ein Zugangspasswort eingeben.', 'error');
+                return;
+            }
+            try {
+                const response = await fetch(`${API_BASE_URL}${API_PREFIX}/credentials/keepass`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'KeePass-Datei konnte nicht erzeugt werden');
+                }
+                const blob = await response.blob();
+                const disposition = response.headers.get('Content-Disposition') || '';
+                const filenameMatch = disposition.match(/filename="([^"]+)"/);
+                const filename = filenameMatch ? filenameMatch[1] : 'geraet-zugangsdaten.kdbx';
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.click();
+                URL.revokeObjectURL(url);
+                hideCredentialsModal();
+                document.getElementById('keepassMasterPassword').value = '';
+                showApiMessage('KeePass-Datei wurde verschlüsselt erzeugt und heruntergeladen.', 'success');
+            } catch (error) {
+                console.error('KeePass Export Fehler:', error);
+                showApiMessage(`KeePass-Datei konnte nicht erstellt werden: ${error.message}`, 'error');
+            }
         }
 
         // Login Modal anzeigen
