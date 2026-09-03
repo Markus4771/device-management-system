@@ -25,8 +25,10 @@ class KeepassExportRequest(BaseModel):
     local_admin: Optional[str] = None
     local_admin_password: Optional[SecretStr] = None
     teamviewer_id: Optional[str] = None
+    teamviewer_user: Optional[str] = None
     teamviewer_password: Optional[SecretStr] = None
     rustdesk_id: Optional[str] = None
+    rustdesk_user: Optional[str] = None
     rustdesk_password: Optional[SecretStr] = None
     master_password: SecretStr = Field(
         ..., min_length=12, description="KeePass-Masterpasswort"
