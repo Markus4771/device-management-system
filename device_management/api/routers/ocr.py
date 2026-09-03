@@ -257,7 +257,9 @@ async def process_uploaded_file(
             template_applied=result.get("template_id"),
             source_file_url=f"/api/v1/ocr/source/{result.get('source_file_name')}" if result.get("source_file_name") else None,
             source_file_type=result.get("source_file_type"),
-            error_message=result.get("error_message")
+            error_message=result.get("error_message"),
+            layout_fields=result.get("layout_fields", {}),
+            handwriting_model=result.get("handwriting_model", {})
         )
         
     except HTTPException:
