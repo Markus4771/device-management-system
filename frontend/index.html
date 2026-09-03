@@ -225,7 +225,7 @@
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="localAdmin" class="form-label">Lokaler Administrator</label>
-                    <input type="text" class="form-control" id="localAdmin">
+                    <input type="text" class="form-control" id="localAdmin" value="infodatacom" readonly>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="localAdminPassword" class="form-label">Passwort</label>
@@ -448,16 +448,28 @@
                                 <h5 class="section-title"><i class="fas fa-shield-alt me-2"></i> Remote Zugang & Sicherheit</h5>
                                 
                                 <div class="row">
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="teamviewerId" class="form-label">TeamViewer-ID <span class="optional-badge">optional</span></label>
                                             <input type="text" class="form-control" id="teamviewerId" placeholder="123 456 789">
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="teamviewerUserForm" class="form-label">TeamViewer-Benutzer</label>
+                                            <input type="text" class="form-control" id="teamviewerUserForm">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label for="rustdeskId" class="form-label">RustDesk-ID <span class="optional-badge">optional</span></label>
                                             <input type="text" class="form-control" id="rustdeskId" placeholder="1234567890123456">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="rustdeskUserForm" class="form-label">RustDesk-Benutzer</label>
+                                            <input type="text" class="form-control" id="rustdeskUserForm">
                                         </div>
                                     </div>
                                     <div class="col-md-4">
@@ -997,7 +1009,9 @@
                 ip_address: document.getElementById('ipAddress').value.trim() || null,
                 domain: document.getElementById('domain').value.trim() || null,
                 teamviewer_id: document.getElementById('teamviewerId').value.trim() || null,
+                teamviewer_user_form: document.getElementById('teamviewerUserForm').value.trim() || null,
                 rustdesk_id: document.getElementById('rustdeskId').value.trim() || null,
+                rustdesk_user_form: document.getElementById('rustdeskUserForm').value.trim() || null,
                 netlock_rmm_agent: document.getElementById('netlockRmmAgent').checked,
                 antivirus: document.getElementById('antivirus').value || null,
                 notes: document.getElementById('notes').value.trim() || null,
@@ -1164,6 +1178,13 @@
         // Zugangsdaten-Dialog anzeigen
         function showCredentialsModal() {
             const pcName = document.getElementById('pcName').value.trim();
+            document.getElementById('localAdmin').value = 'infodatacom';
+            document.getElementById('teamviewerUser').value = document.getElementById('teamviewerUserForm').value;
+            document.getElementById('rustdeskUser').value = document.getElementById('rustdeskUserForm').value;
+            document.getElementById('localUserPassword').value = generatePassword();
+            document.getElementById('localAdminPassword').value = generatePassword();
+            document.getElementById('teamviewerPassword').value = generatePassword();
+            document.getElementById('rustdeskPassword').value = generatePassword();
             if (!pcName) {
                 showApiMessage('Bitte zuerst den PC-Namen im Geräteformular eingeben.', 'error');
                 return;
@@ -1173,6 +1194,13 @@
 
         function hideCredentialsModal() {
             document.getElementById('credentialsModal').style.display = 'none';
+        }
+
+        function generatePassword() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%*-_=+';
+            const values = new Uint32Array(24);
+            crypto.getRandomValues(values);
+            return Array.from(values, value => chars[value % chars.length]).join('');
         }
 
         // Erzeugt eine verschlüsselte KeePass-Datei für genau diesen Rechner.
