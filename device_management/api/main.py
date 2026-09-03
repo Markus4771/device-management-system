@@ -105,6 +105,16 @@ async def startup_event():
     logger.info(f"Environment: {'Development' if settings.debug else 'Production'}")
     logger.info(f"Host: {settings.host}:{settings.port}")
     logger.info(f"Database: {settings.database_url}")
+
+    # OCR-Dateiüberwachung automatisch starten. Fehlt die Samba-Freigabe,
+    # bleibt die API trotzdem verfügbar und der Upload kann weiterhin genutzt werden.
+    try:
+        from .routers.ocr import ocr_manager
+        if not ocr_manager.service.running:
+            ocr_manager.start_watching()
+            logger.info("OCR service started automatically")
+    except Exception as exc:
+        logger.warning(f"OCR service could not be started automatically: {exc}")
     
     # Datenbank initialisieren
     from sqlalchemy import create_engine
