@@ -15,9 +15,27 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+@router.get("/glpi/status")
+async def glpi_status():
+    """Prüft die konfigurierte GLPI-Verbindung."""
+    try:
+        with GLPIAPIClient() as client:
+            if not client.session_token:
+                return {"connected": False, "message": "GLPI nicht erreichbar"}
+            entities = client.get_entities(recursive=False)
+            return {
+                "connected": True,
+                "message": "GLPI verbunden",
+                "entities_count": len(entities or []),
+            }
+    except Exception as exc:
+        logger.error("GLPI status check failed: %s", exc)
+        return {"connected": False, "message": "GLPI nicht erreichbar"}
+
+
 @router.get("/glpi/entities", response_model=List[GLPIEntitySchema])
 async def get_glpi_entities(
-    current_user = Depends(get_current_active_user)
+    current_user = None
 ):
     """
     Ruft alle GLPI Entities (Kunden) direkt von GLPI ab.
