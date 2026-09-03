@@ -100,6 +100,16 @@ class FormTemplate:
                         if value and value not in keywords:  # Vermeide Rückgabe des Keywords selbst
                             results[f"keyword_{field_name}"] = value
                             break
+                    else:
+                        # Bei Formularen steht der handschriftliche Wert oft in
+                        # der Zeile direkt vor dem gedruckten Feldlabel.
+                        lines = [line.strip() for line in text.splitlines() if line.strip()]
+                        for line_index, line in enumerate(lines):
+                            if keyword_lower in line.lower() and line_index > 0:
+                                candidate = lines[line_index - 1].strip(" :-")
+                                if candidate and keyword_lower not in candidate.lower():
+                                    results[f"keyword_{field_name}"] = candidate
+                                    break
         
         return results
     
