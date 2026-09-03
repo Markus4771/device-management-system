@@ -11,6 +11,7 @@ from typing import Optional, Dict, Any, List, Tuple
 from pathlib import Path
 from datetime import datetime
 import shutil
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -184,8 +185,25 @@ class OCRProcessor:
         try:
             from pdf2image import convert_from_path
             
-            # PDF in Bilder konvertieren
-            images = convert_from_path(str(pdf_path))
+            # PDF in Bilder konvertieren. Unter systemd kann PATH
+            # eingeschränkt sein; deshalb Poppler explizit suchen.
+            poppler_path = None
+            for executable in ("pdftoppm", "pdfinfo"):
+                executable_path = shutil.which(executable)
+                if executable_path:
+                    poppler_path = str(Path(executable_path).parent)
+                    break
+            if not poppler_path:
+                for candidate in ("/usr/bin", "/usr/local/bin", "/bin"):
+                    if (Path(candidate) / "pdftoppm").exists():
+                        poppler_path = candidate
+                        break
+            if not poppler_path:
+                raise RuntimeError(
+                    "Poppler fehlt. Bitte auf Debian 'apt-get install -y poppler-utils' ausführen."
+                )
+            
+            images = convert_from_path(str(pdf_path), poppler_path=poppler_path)
             
             ocr_text_parts = []
             total_confidence = 0.0
