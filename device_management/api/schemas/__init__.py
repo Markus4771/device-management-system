@@ -155,7 +155,7 @@ class GLPIEntitySchema(BaseModel):
     name: str
     completename: str
     level: int
-    entities_id: int
+    entities_id: Optional[int] = None
     comment: Optional[str] = None
 
 
