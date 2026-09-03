@@ -717,7 +717,7 @@
         async function loadGlpiData() {
             try {
                 // Kunden laden
-                const customersResponse = await fetch(`${API_BASE_URL}${API_PREFIX}/customers`);
+                const customersResponse = await fetch(`${API_BASE_URL}${API_PREFIX}/glpi/entities`);
                 if (customersResponse.ok) {
                     const customers = await customersResponse.json();
                     glpiData.customers = customers;
@@ -730,7 +730,7 @@
                 }
                 
                 // Benutzer laden
-                const usersResponse = await fetch(`${API_BASE_URL}${API_PREFIX}/users`);
+                const usersResponse = await fetch(`${API_BASE_URL}${API_PREFIX}/glpi/users`);
                 if (usersResponse.ok) {
                     const users = await usersResponse.json();
                     glpiData.users = users;
@@ -757,7 +757,7 @@
             customers.forEach(customer => {
                 const option = document.createElement('option');
                 option.value = customer.id;
-                option.textContent = `${customer.name} (${customer.code || 'Kein Code'})`;
+                option.textContent = `${customer.name || customer.completename} (GLPI-${customer.id})`;
                 customerSelect.appendChild(option);
             });
         }
@@ -765,7 +765,7 @@
         // Locations für Kunden laden
         async function loadLocationsForCustomer(customerId) {
             try {
-                const response = await fetch(`${API_BASE_URL}${API_PREFIX}/customers/${customerId}/locations`);
+                const response = await fetch(`${API_BASE_URL}${API_PREFIX}/glpi/locations?entity_id=${customerId}`);
                 if (response.ok) {
                     const locations = await response.json();
                     glpiData.locations = locations;
@@ -793,7 +793,7 @@
             users.forEach(user => {
                 const option = document.createElement('option');
                 option.value = user.id;
-                option.textContent = `${user.full_name || user.username} (${user.email})`;
+                option.textContent = `${user.full_name || user.realname || user.firstname || user.name} (${user.email})`;
                 userSelect.appendChild(option);
             });
         }
@@ -804,7 +804,7 @@
             technicians.forEach(tech => {
                 const option = document.createElement('option');
                 option.value = tech.id;
-                option.textContent = `${tech.full_name || tech.username}${tech.email ? ` (${tech.email})` : ''}`;
+                option.textContent = `${tech.full_name || tech.realname || tech.firstname || tech.name}${tech.email ? ` (${tech.email})` : ''}`;
                 technicianSelect.appendChild(option);
             });
         }
