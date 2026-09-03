@@ -236,6 +236,7 @@ class OCRProcessResult(BaseModel):
     template_applied: Optional[str] = None
     source_file_url: Optional[str] = None
     source_file_type: Optional[str] = None
+    error_message: Optional[str] = None
     
     class Config:
         from_attributes = True
