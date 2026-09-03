@@ -1,5 +1,5 @@
-# Optionale Handschrift-OCR
-# Wird nur benötigt, wenn auf der OCR-Kontrollseite
-# "TrOCR-Handschriftmodell verwenden" aktiviert wird.
+# Optionale Handschrift-OCR ohne CUDA
+# Fuer Debian-LXC/CPU. PyTorch wird bewusst aus dem CPU-Index installiert.
+--extra-index-url https://download.pytorch.org/whl/cpu
 transformers>=4.40.0
-torch>=2.2.0
+torch>=2.2.0+cpu
