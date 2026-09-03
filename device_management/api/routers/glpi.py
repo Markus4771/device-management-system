@@ -248,6 +248,59 @@ async def get_glpi_technicians(
         )
 
 
+@router.get("/glpi/manufacturers")
+async def get_glpi_manufacturers():
+    """Ruft alle Hersteller aus GLPI ab."""
+    try:
+        with GLPIAPIClient() as glpi_client:
+            if not glpi_client.session_token:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="GLPI-Konnektivität fehlgeschlagen",
+                )
+            manufacturers = glpi_client.get_manufacturers()
+            return manufacturers or []
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Error fetching GLPI manufacturers")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Hersteller konnten nicht aus GLPI geladen werden: {exc}",
+        )
+
+
+class GLPIManufacturerCreateRequest(BaseModel):
+    name: str = Field(..., min_length=1)
+
+
+@router.post("/glpi/manufacturers")
+async def create_glpi_manufacturer(data: GLPIManufacturerCreateRequest):
+    """Legt einen Hersteller in GLPI an oder liefert den vorhandenen zurück."""
+    try:
+        with GLPIAPIClient() as glpi_client:
+            if not glpi_client.session_token:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="GLPI-Konnektivität fehlgeschlagen",
+                )
+            manufacturer_id = glpi_client.find_or_create_reference("Manufacturer", data.name.strip())
+            if not manufacturer_id:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="Hersteller konnte in GLPI nicht angelegt werden",
+                )
+            return {"id": manufacturer_id, "name": data.name.strip()}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Error creating GLPI manufacturer")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Hersteller konnte nicht angelegt werden: {exc}",
+        )
+
+
 @router.get("/glpi/computers/search")
 async def search_glpi_computers(
     serial: Optional[str] = Query(None, description="Seriennummer"),
