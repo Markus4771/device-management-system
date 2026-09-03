@@ -158,8 +158,12 @@ document.getElementById('uploadForm').addEventListener('submit', async event => 
   document.getElementById('rawCard').style.display = 'none';
   try {
     const response = await fetch(API_PREFIX + '/ocr/process-upload', {method:'POST', body});
-    const result = await response.json();
+    const responseText = await response.text();
+    let result;
+    try { result = JSON.parse(responseText); }
+    catch (parseError) { throw new Error('Serverantwort ist kein gültiges JSON: ' + responseText.slice(0, 300)); }
     if (!response.ok) throw new Error(result.detail || 'OCR-Verarbeitung fehlgeschlagen');
+    if (result.status === 'error') throw new Error(result.error_message || 'OCR konnte keinen Text erkennen');
     latestResult = result;
     renderFields(result.extracted_data || {});
     const sourceUrl = result.source_file_url || '';
