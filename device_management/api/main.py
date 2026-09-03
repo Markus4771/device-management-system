@@ -6,7 +6,6 @@ FastAPI-App mit allen Routen und Abhängigkeiten für Phase 1.
 
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 import logging
 from typing import List, Optional
 
@@ -43,10 +42,9 @@ def create_application() -> FastAPI:
         allow_headers=["*"],
     )
     
-    # HTTPS Redirect für Produktion
-    if not settings.debug:
-        app.add_middleware(HTTPSRedirectMiddleware)
-    
+    # Die Anwendung läuft hinter Nginx auch im internen HTTP-Betrieb.
+    # HTTPS-Terminierung kann später am Reverse Proxy aktiviert werden.
+
     # API-Router importieren und einbinden
     from .routers import devices, customers, users, auth, glpi, ocr, setup
     
