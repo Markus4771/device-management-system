@@ -738,9 +738,8 @@
                 }
                 
                 // Techniker laden (filtere nach Techniker-Rolle)
-                glpiData.technicians = glpiData.users.filter(user => 
-                    user.role === 'technician' || user.is_technician === true
-                );
+                const techniciansResponse = await fetch(`${API_BASE_URL}${API_PREFIX}/glpi/technicians`);
+                glpiData.technicians = techniciansResponse.ok ? await techniciansResponse.json() : [];
                 populateTechnicianSelect(glpiData.technicians);
                 
                 showApiMessage('GLPI-Daten erfolgreich geladen', 'success');
