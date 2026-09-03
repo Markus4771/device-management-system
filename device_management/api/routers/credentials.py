@@ -79,7 +79,7 @@ async def export_keepass(data: KeepassExportRequest):
                 data.teamviewer_id,
                 _secret(data.teamviewer_password) or _generated_password(),
             ),
-            ("RustDesk", data.rustdesk_id, _secret(data.rustdesk_password) or _generated_password()),
+            ("RustDesk", data.rustdesk_user or data.rustdesk_id, _secret(data.rustdesk_password) or _generated_password()),
         ]
         for title, username, password in entries:
             if username or password:
