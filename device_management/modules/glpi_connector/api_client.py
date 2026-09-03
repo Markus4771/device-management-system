@@ -182,6 +182,18 @@ class GLPIAPIClient:
             logger.error(f"Exception beim Abrufen der Technicians: {e}")
             return []
     
+    def get_manufacturers(self) -> List[Dict]:
+        """Ruft Hersteller aus GLPI ab."""
+        try:
+            response = self.client.get("/Manufacturer", headers=self._get_headers())
+            if response.status_code == 200:
+                data = response.json()
+                return data if isinstance(data, list) else []
+            logger.error("Fehler beim Abrufen der Hersteller: %s", response.status_code)
+        except Exception as exc:
+            logger.error("Exception beim Abrufen der Hersteller: %s", exc)
+        return []
+
     def find_or_create_reference(self, itemtype: str, name: str) -> Optional[int]:
         """Findet ein GLPI-Referenzobjekt oder legt es bei Bedarf an."""
         try:
