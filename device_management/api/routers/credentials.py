@@ -4,6 +4,7 @@ from __future__ import annotations
 import io
 import os
 import re
+import secrets
 import tempfile
 from typing import Optional
 
@@ -44,22 +45,14 @@ def _secret(value: Optional[SecretStr]) -> str:
     return value.get_secret_value() if value else ""
 
 
+def _generated_password(length: int = 24) -> str:
+    alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%*-_=+"
+    return "".join(secrets.choice(alphabet) for _ in range(length))
+
+
 @router.post("/credentials/keepass", response_class=Response)
 async def export_keepass(data: KeepassExportRequest):
     """Erzeugt eine verschlüsselte KeePass-Datei für genau einen Rechner."""
-    if not any(
-        (
-            data.local_user_password,
-            data.local_admin_password,
-            data.teamviewer_password,
-            data.rustdesk_password,
-        )
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Mindestens ein Zugangspasswort muss angegeben werden.",
-        )
-
     file_buffer = io.BytesIO()
     temp_path = None
     try:
@@ -75,18 +68,18 @@ async def export_keepass(data: KeepassExportRequest):
             f"Seriennummer: {data.serial_number or '-'}",
         ]
         entries = [
-            ("Lokaler Benutzer", data.local_user, _secret(data.local_user_password)),
+            ("Lokaler Benutzer", data.local_user, _secret(data.local_user_password) or _generated_password()),
             (
                 "Lokaler Administrator",
                 data.local_admin,
-                _secret(data.local_admin_password),
+                _secret(data.local_admin_password) or _generated_password(),
             ),
             (
                 "TeamViewer",
                 data.teamviewer_id,
-                _secret(data.teamviewer_password),
+                _secret(data.teamviewer_password) or _generated_password(),
             ),
-            ("RustDesk", data.rustdesk_id, _secret(data.rustdesk_password)),
+            ("RustDesk", data.rustdesk_id, _secret(data.rustdesk_password) or _generated_password()),
         ]
         for title, username, password in entries:
             if username or password:
