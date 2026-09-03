@@ -56,7 +56,8 @@ def create_application() -> FastAPI:
     app.include_router(glpi.router, prefix=settings.api_prefix, tags=["GLPI"])
     app.include_router(ocr.router, prefix=settings.api_prefix, tags=["OCR Processing"])
     app.include_router(setup.router, prefix=f"{settings.api_prefix}/setup", tags=["Setup"])
-    app.include_router(credentials.router, prefix=settings.api_prefix, tags=["Credentials"])\n    app.include_router(documents.router, prefix=settings.api_prefix, tags=["Documents"])
+    app.include_router(credentials.router, prefix=settings.api_prefix, tags=["Credentials"])
+    app.include_router(documents.router, prefix=settings.api_prefix, tags=["Documents"])
     
     # Health Check Endpoint
     @app.get("/", tags=["Health"])
