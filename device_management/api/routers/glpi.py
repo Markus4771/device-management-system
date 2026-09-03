@@ -248,6 +248,27 @@ async def get_glpi_technicians(
         )
 
 
+@router.get("/glpi/computer-types")
+async def get_glpi_computer_types():
+    """Ruft Computer-Typen aus GLPI ab."""
+    try:
+        with GLPIAPIClient() as glpi_client:
+            if not glpi_client.session_token:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="GLPI-Konnektivität fehlgeschlagen",
+                )
+            return glpi_client.get_computer_types() or []
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Error fetching GLPI computer types")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Computer-Typen konnten nicht aus GLPI geladen werden: {exc}",
+        )
+
+
 @router.get("/glpi/manufacturers")
 async def get_glpi_manufacturers():
     """Ruft alle Hersteller aus GLPI ab."""
