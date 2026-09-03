@@ -311,7 +311,7 @@ class OCRProcessor:
                     total_confidence += confidence
                     confidence_count += 1
             
-            ocr_text = '\\n'.join(' '.join(words) for words in line_words.values())
+            ocr_text = "\n".join(' '.join(words) for words in line_words.values())
             avg_confidence = total_confidence / confidence_count if confidence_count > 0 else 0.0
             
             return ocr_text, avg_confidence
