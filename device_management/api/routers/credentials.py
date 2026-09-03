@@ -26,10 +26,8 @@ class KeepassExportRequest(BaseModel):
     local_admin: Optional[str] = None
     local_admin_password: Optional[SecretStr] = None
     teamviewer_id: Optional[str] = None
-    teamviewer_user: Optional[str] = None
     teamviewer_password: Optional[SecretStr] = None
     rustdesk_id: Optional[str] = None
-    rustdesk_user: Optional[str] = None
     rustdesk_password: Optional[SecretStr] = None
     master_password: SecretStr = Field(
         ..., min_length=12, description="KeePass-Masterpasswort"
@@ -79,7 +77,7 @@ async def export_keepass(data: KeepassExportRequest):
                 data.teamviewer_id,
                 _secret(data.teamviewer_password) or _generated_password(),
             ),
-            ("RustDesk", data.rustdesk_user or data.rustdesk_id, _secret(data.rustdesk_password) or _generated_password()),
+            ("RustDesk", data.rustdesk_id, _secret(data.rustdesk_password) or _generated_password()),
         ]
         for title, username, password in entries:
             if username or password:
