@@ -24,7 +24,7 @@ class GLPIAPIClient:
 
         # HTTP Client mit Session-Token
         self.client = httpx.Client(
-            base_url=f"{self.base_url}/apirest.php",
+            base_url=f"{self.base_url}/api.php/v1",
             timeout=30.0,
             headers=self._get_headers()
         )
@@ -35,7 +35,11 @@ class GLPIAPIClient:
             "Content-Type": "application/json",
             "App-Token": self.app_token,
         }
-        
+
+        # GLPI V1 authentifiziert die InitSession-Anfrage mit dem User Token.
+        if self.user_token and not self.session_token:
+            headers["Authorization"] = f"user_token {self.user_token}"
+
         if self.session_token:
             headers["Session-Token"] = self.session_token
         
@@ -46,7 +50,11 @@ class GLPIAPIClient:
         try:
             response = self.client.get(
                 "/initSession",
-                headers={"App-Token": self.app_token, "Content-Type": "application/json"}
+                headers={
+                    "App-Token": self.app_token,
+                    "Authorization": f"user_token {self.user_token}",
+                    "Content-Type": "application/json",
+                },
             )
             
             if response.status_code == 200:
