@@ -180,7 +180,8 @@ document.getElementById('uploadForm').addEventListener('submit', async event => 
       document.getElementById('sourceCard').style.display = 'block';
     }
     const confidence = Number(result.ocr_confidence || 0);
-    document.getElementById('confidence').textContent = confidence ? 'Sicherheit: ' + (confidence * 100).toFixed(1) + '%' : 'Sicherheit nicht verfügbar';
+    const confidencePercent = confidence <= 1 ? confidence * 100 : confidence;
+    document.getElementById('confidence').textContent = confidence ? 'Sicherheit: ' + confidencePercent.toFixed(1) + '%' : 'Sicherheit nicht verfügbar';
     document.getElementById('rawText').textContent = result.raw_text_preview || 'Kein Rohtext zurückgegeben.';
     document.getElementById('resultCard').style.display = 'block';
     document.getElementById('rawCard').style.display = 'block';
