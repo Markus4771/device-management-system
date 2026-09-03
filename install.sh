@@ -89,7 +89,7 @@ install_system_packages() {
         poppler-utils \
         libmagic1 \
         libsmbclient \
-        libgl1-mesa-glx \
+        libgl1 \
         libglib2.0-0
     
     # Netzwerk-Scanning
@@ -121,7 +121,7 @@ setup_project() {
         echo
         if [[ ! $REPLY =~ ^[Jj]$ ]]; then
             log_info "Beende Installation"
-            exit增量 0
+            exit 0
         fi
         sudo rm -rf "$PROJECT_DIR"
     fi
@@ -417,7 +417,7 @@ main() {
     # Variablen
     PROJECT_DIR="/opt/device-management"
     INTERACTIVE="true"
-    CLONE_FROM_GITHUB="false"  # Lokale Installation
+    CLONE_FROM_GITHUB="true"   # Installation aus dem GitHub-Repository
     INSTALL_POSTGRESQL="false" # SQLite für einfache Installation
     ENABLE_OCR_WORKER="false"  # OCR Worker optional
     DB_PASSWORD="$(openssl rand -hex 16)"
