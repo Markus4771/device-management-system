@@ -304,6 +304,12 @@ server {
         proxy_read_timeout 60s;
     }
     
+    # Webbasierter GLPI-Ersteinrichtungsassistent
+    location = /setup {
+        root $PROJECT_DIR/frontend;
+        try_files /setup.html =404;
+    }
+
     # Frontend
     location / {
         root $PROJECT_DIR/frontend;
@@ -347,20 +353,8 @@ configure_environment() {
         cp .env.example .env
     fi
     
-    # GLPI Konfiguration abfragen
-    if [[ "$INTERACTIVE" == "true" ]]; then
-        echo
-        echo "=== GLPI Konfiguration ==="
-        echo "Bitte GLPI Zugangsdaten eingeben:"
-        
-        read -p "GLPI Base URL (z.B. http://192.168.0.23/glpi): " GLPI_BASE_URL
-        read -p "GLPI App Token: " GLPI_APP_TOKEN
-        read -p "GLPI User Token: " GLPI_USER_TOKEN
-        
-        sed -i "s|^GLPI_BASE_URL=.*|GLPI_BASE_URL=$GLPI_BASE_URL|" .env
-        sed -i "s|^GLPI_APP_TOKEN=.*|GLPI_APP_TOKEN=$GLPI_APP_TOKEN|" .env
-        sed -i "s|^GLPI_USER_TOKEN=.*|GLPI_USER_TOKEN=$GLPI_USER_TOKEN|" .env
-    fi
+    # GLPI wird nach der Installation über die Weboberfläche eingerichtet.
+    # Die Werte bleiben zunächst leer, damit der Ersteinrichtungsassistent erscheint.
     
     # Secret Key generieren
     SECRET_KEY=$(openssl rand -hex 32)
