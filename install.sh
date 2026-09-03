@@ -91,7 +91,19 @@ install_system_packages() {
         libsmbclient \
         libgl1 \
         libglib2.0-0
-    
+
+    # OCR-Werkzeuge verifizieren. Die Anwendung sucht diese Befehle
+    # zusätzlich über absolute Standardpfade, damit systemd sie findet.
+    if ! command -v tesseract >/dev/null 2>&1; then
+        log_error "Tesseract wurde nicht gefunden"
+        exit 1
+    fi
+    if ! command -v pdftoppm >/dev/null 2>&1 || ! command -v pdfinfo >/dev/null 2>&1; then
+        log_error "Poppler wurde nicht vollständig installiert"
+        exit 1
+    fi
+    log_info "OCR-Werkzeuge gefunden: $(command -v tesseract), $(command -v pdftoppm)"
+
     # Netzwerk-Scanning
     sudo apt-get install -y \
         nmap \
