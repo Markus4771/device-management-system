@@ -1092,6 +1092,28 @@
                     
                     // Erfolg in Console loggen
                     console.log('Gerät gespeichert:', result);
+
+                    // Fertige PDF-Dokumentation im OCR-/Freigabeordner erzeugen
+                    await fetch(`${API_BASE_URL}${API_PREFIX}/documents/generate`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            pc_name: formData.pc_name,
+                            customer: customerSelect.selectedOptions[0]?.textContent,
+                            location: locationSelect.selectedOptions[0]?.textContent,
+                            serial_number: formData.serial_number,
+                            manufacturer: formData.manufacturer,
+                            model: formData.model,
+                            operating_system: formData.operating_system,
+                            computer_type: computerTypeSelect.selectedOptions[0]?.textContent,
+                            user: userSelect.selectedOptions[0]?.textContent,
+                            technician: technicianSelect.selectedOptions[0]?.textContent,
+                            mac_address: formData.mac_address,
+                            teamviewer_id: formData.teamviewer_id,
+                            rustdesk_id: formData.rustdesk_id,
+                            notes: formData.notes
+                        })
+                    });
                     
                     // Optional: Erfolgsmodal anzeigen
                     setTimeout(() => {
