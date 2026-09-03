@@ -123,6 +123,9 @@ setup_project() {
             log_info "Beende Installation"
             exit 0
         fi
+        # Das Projektverzeichnis darf nicht das aktuelle Arbeitsverzeichnis sein,
+        # da Git sonst nach dem Löschen keinen gültigen Arbeitsort mehr hat.
+        cd /
         sudo rm -rf "$PROJECT_DIR"
     fi
     
