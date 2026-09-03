@@ -41,6 +41,8 @@ class OCRProcessor:
         self.archive_path = Path(config.get("archive_path", "/tmp/glpi-formulare/archiv"))
         self.ocr_language = config.get("ocr_language", "deu+eng")
         self.preferred_engine = config.get("preferred_engine", "tesseract")
+        self.handwriting_ocr = None
+        self.last_layout_fields = {}
         
         # Verzeichnisse erstellen falls nicht existent
         for path in [self.input_path, self.processing_path, self.done_path,  
@@ -96,7 +98,7 @@ class OCRProcessor:
             logger.error(f"Error moving file {file_path} to processing: {e}")
             return None
     
-    def process_file(self, file_path: Path, template_id: Optional[str] = None, handwriting_mode: bool = False) -> Dict[str, Any]:
+    def process_file(self, file_path: Path, template_id: Optional[str] = None, handwriting_mode: bool = False, use_trocr: bool = False) -> Dict[str, Any]:
         """
         Verarbeitet eine Datei mit OCR.
         
@@ -123,13 +125,15 @@ class OCRProcessor:
             
             # OCR-Engine basierend auf Dateityp auswählen
             if file_type == "pdf":
-                ocr_text, confidence = self._process_pdf(file_path, handwriting_mode=handwriting_mode)
+                ocr_text, confidence = self._process_pdf(file_path, handwriting_mode=handwriting_mode, use_trocr=use_trocr)
             else:
-                ocr_text, confidence = self._process_image(file_path, handwriting_mode=handwriting_mode)
+                ocr_text, confidence = self._process_image(file_path, handwriting_mode=handwriting_mode, use_trocr=use_trocr)
             
             results["ocr_text"] = ocr_text
             results["ocr_confidence"] = confidence
             results["extraction_method"] = self.preferred_engine
+            results["layout_fields"] = self.last_layout_fields
+            results["handwriting_model"] = self.handwriting_ocr.status() if self.handwriting_ocr else {"requested": False, "available": False}
             
             # Hier würde die Formularvorlagenanwendung kommen
             if template_id:
@@ -159,7 +163,7 @@ class OCRProcessor:
         else:
             return "unknown"
     
-    def _process_pdf(self, pdf_path: Path, handwriting_mode: bool = False) -> Tuple[str, float]:
+    def _process_pdf(self, pdf_path: Path, handwriting_mode: bool = False, use_trocr: bool = False) -> Tuple[str, float]:
         """
         Verarbeitet eine PDF-Datei mit OCR.
         
@@ -207,6 +211,7 @@ class OCRProcessor:
             
             ocr_text_parts = []
             total_confidence = 0.0
+            self.last_layout_fields = {}
             page_count = len(images)
             
             for i, image in enumerate(images):
@@ -223,7 +228,7 @@ class OCRProcessor:
             logger.error("pdf2image nicht verfügbar")
             raise
     
-    def _process_image(self, image_path: Path, handwriting_mode: bool = False) -> Tuple[str, float]:
+    def _process_image(self, image_path: Path, handwriting_mode: bool = False, use_trocr: bool = False) -> Tuple[str, float]:
         """
         Verarbeitet ein Bild mit OCR.
         
@@ -237,6 +242,10 @@ class OCRProcessor:
             return self._process_image_with_paddleocr(image_path, handwriting_mode=handwriting_mode)
         else:
             # Default: Tesseract
+            if handwriting_mode:
+                from PIL import Image
+                self.handwriting_ocr = HandwritingFormOCR(use_trocr=use_trocr)
+                self.last_layout_fields = self.handwriting_ocr.extract(Image.open(image_path))
             return self._process_image_with_tesseract(image_path, handwriting_mode=handwriting_mode)
     
     def _process_image_with_tesseract(self, image, handwriting_mode: bool = False) -> Tuple[str, float]:
@@ -463,7 +472,7 @@ class OCRProcessor:
             logger.error(f"Error archiving {filename}: {e}")
             return False
     
-    def run_single_file(self, file_path: Path, template_id: Optional[str] = None, handwriting_mode: bool = False) -> Dict[str, Any]:
+    def run_single_file(self, file_path: Path, template_id: Optional[str] = None, handwriting_mode: bool = False, use_trocr: bool = False) -> Dict[str, Any]:
         """
         Verarbeitet eine einzelne Datei von Anfang bis Ende.
         
@@ -482,7 +491,7 @@ class OCRProcessor:
             return {"status": "error", "error": "Could not move file to processing"}
         
         # 2. OCR-Verarbeitung durchführen
-        result = self.process_file(processing_path, template_id, handwriting_mode=handwriting_mode)
+        result = self.process_file(processing_path, template_id, handwriting_mode=handwriting_mode, use_trocr=use_trocr)
         
         # 3. Finalisieren basierend auf Erfolg
         success = result.get("status") == "completed"
