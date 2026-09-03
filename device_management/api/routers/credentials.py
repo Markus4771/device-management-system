@@ -2,13 +2,14 @@
 from __future__ import annotations
 
 import io
+import os
 import re
+import tempfile
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import Response
 from pydantic import BaseModel, Field, SecretStr
-
 from pykeepass import create_database
 
 router = APIRouter()
@@ -27,7 +28,9 @@ class KeepassExportRequest(BaseModel):
     teamviewer_password: Optional[SecretStr] = None
     rustdesk_id: Optional[str] = None
     rustdesk_password: Optional[SecretStr] = None
-    master_password: SecretStr = Field(..., min_length=12, description="KeePass-Masterpasswort")
+    master_password: SecretStr = Field(
+        ..., min_length=12, description="KeePass-Masterpasswort"
+    )
 
 
 def _safe_filename(value: str) -> str:
@@ -55,18 +58,15 @@ async def export_keepass(data: KeepassExportRequest):
             detail="Mindestens ein Zugangspasswort muss angegeben werden.",
         )
 
-    # Die Datei wird nur temporär erzeugt und nach dem Lesen nicht dauerhaft gespeichert.
     file_buffer = io.BytesIO()
     temp_path = None
     try:
-        import os
-        import tempfile
         temp_file = tempfile.NamedTemporaryFile(suffix=".kdbx", delete=False)
         temp_path = temp_file.name
         temp_file.close()
+
         keepass = create_database(temp_path, password=_secret(data.master_password))
         group = keepass.add_group(keepass.root_group, data.pc_name.strip())
-
         metadata = [
             f"Kunde: {data.customer or '-'}",
             f"Standort: {data.location or '-'}",
@@ -74,8 +74,16 @@ async def export_keepass(data: KeepassExportRequest):
         ]
         entries = [
             ("Lokaler Benutzer", data.local_user, _secret(data.local_user_password)),
-            ("Lokaler Administrator", data.local_admin, _secret(data.local_admin_password)),
-            ("TeamViewer", data.teamviewer_id, _secret(data.teamviewer_password)),
+            (
+                "Lokaler Administrator",
+                data.local_admin,
+                _secret(data.local_admin_password),
+            ),
+            (
+                "TeamViewer",
+                data.teamviewer_id,
+                _secret(data.teamviewer_password),
+            ),
             ("RustDesk", data.rustdesk_id, _secret(data.rustdesk_password)),
         ]
         for title, username, password in entries:
@@ -90,8 +98,6 @@ async def export_keepass(data: KeepassExportRequest):
         keepass.save()
         with open(temp_path, "rb") as exported_file:
             file_buffer.write(exported_file.read())
-    except HTTPException:
-        raise
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -103,24 +109,6 @@ async def export_keepass(data: KeepassExportRequest):
                 os.unlink(temp_path)
             except OSError:
                 pass
-
-    filename = f"{_safe_filename(data.pc_name)}-zugangsdaten.kdbx"
-    return Response(
-        content=file_buffer.getvalue(),
-        media_type="application/octet-stream",
-        headers={
-            "Content-Disposition": f'attachment; filename="{filename}"',
-            "Cache-Control": "no-store",
-        },
-    )
-
-# END
-#        raise
-    except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"KeePass-Datei konnte nicht erzeugt werden: {exc}",
-        ) from exc
 
     filename = f"{_safe_filename(data.pc_name)}-zugangsdaten.kdbx"
     return Response(
