@@ -75,7 +75,7 @@ async def get_glpi_entities(
 @router.get("/glpi/locations", response_model=List[GLPILocationSchema])
 async def get_glpi_locations(
     entity_id: Optional[int] = Query(None, description="Filter nach GLPI Entity ID"),
-    current_user = Depends(get_current_active_user)
+    current_user = None
 ):
     """
     Ruft GLPI Locations (Standorte) direkt von GLPI ab.
@@ -111,7 +111,7 @@ async def get_glpi_locations(
 @router.get("/glpi/users", response_model=List[GLPIUserSchema])
 async def get_glpi_users(
     entity_id: Optional[int] = Query(None, description="Filter nach GLPI Entity ID"),
-    current_user = Depends(get_current_active_user)
+    current_user = None
 ):
     """
     Ruft GLPI Users (Benutzer) direkt von GLPI ab.
@@ -147,7 +147,7 @@ async def get_glpi_users(
 @router.get("/glpi/technicians", response_model=List[GLPIUserSchema])
 async def get_glpi_technicians(
     entity_id: Optional[int] = Query(None, description="Filter nach GLPI Entity ID"),
-    current_user = Depends(get_current_active_user)
+    current_user = None
 ):
     """
     Ruft GLPI Technicians (Techniker) direkt von GLPI ab.
@@ -186,7 +186,7 @@ async def search_glpi_computers(
     mac_address: Optional[str] = Query(None, description="MAC-Adresse"),
     pc_name: Optional[str] = Query(None, description="PC-Name"),
     entity_id: Optional[int] = Query(None, description="GLPI Entity ID"),
-    current_user = Depends(get_current_active_user)
+    current_user = None
 ):
     """
     Sucht Computer in GLPI basierend auf Suchkriterien.
