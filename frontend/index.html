@@ -312,7 +312,11 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="manufacturer" class="form-label">Hersteller</label>
-                                            <input type="text" class="form-control" id="manufacturer" placeholder="z.B. Dell, HP, Lenovo">
+                                            <select class="form-select" id="manufacturer">
+                                                <option value="">Hersteller auswählen...</option>
+                                                <option value="__new__">＋ Neuen Hersteller hinzufügen...</option>
+                                            </select>
+                                            <div class="field-description">Hersteller werden direkt aus GLPI geladen.</div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -545,7 +549,8 @@
             customers: [],
             locations: [],
             users: [],
-            technicians: []
+            technicians: [],
+            manufacturers: []
         };
 
         // DOM Elemente
@@ -560,6 +565,7 @@
         const locationSelect = document.getElementById('location');
         const userSelect = document.getElementById('user');
         const technicianSelect = document.getElementById('technician');
+        const manufacturerSelect = document.getElementById('manufacturer');
         const macAddressInput = document.getElementById('macAddress');
 
         // Initialisierung
@@ -580,6 +586,7 @@
             
             // Customer ändert → Location filter
             customerSelect.addEventListener('change', filterLocationsByCustomer);
+            manufacturerSelect.addEventListener('change', handleManufacturerChange);
             
             // Betriebssystem "Andere" Option
             document.getElementById('operatingSystem').addEventListener('change', function(e) {
@@ -741,6 +748,11 @@
                 const techniciansResponse = await fetch(`${API_BASE_URL}${API_PREFIX}/glpi/technicians`);
                 glpiData.technicians = techniciansResponse.ok ? await techniciansResponse.json() : [];
                 populateTechnicianSelect(glpiData.technicians);
+
+                // Hersteller aus GLPI laden
+                const manufacturersResponse = await fetch(`${API_BASE_URL}${API_PREFIX}/glpi/manufacturers`);
+                glpiData.manufacturers = manufacturersResponse.ok ? await manufacturersResponse.json() : [];
+                populateManufacturerSelect(glpiData.manufacturers);
                 
                 showApiMessage('GLPI-Daten erfolgreich geladen', 'success');
                 
@@ -808,6 +820,58 @@
             });
         }
 
+        // Hersteller-Select füllen
+        function populateManufacturerSelect(manufacturers) {
+            manufacturerSelect.innerHTML = '<option value="">Hersteller auswählen...</option>';
+            manufacturers
+                .filter(manufacturer => manufacturer && manufacturer.id && manufacturer.name)
+                .sort((a, b) => a.name.localeCompare(b.name, 'de'))
+                .forEach(manufacturer => {
+                    const option = document.createElement('option');
+                    option.value = manufacturer.id;
+                    option.textContent = manufacturer.name;
+                    option.dataset.name = manufacturer.name;
+                    manufacturerSelect.appendChild(option);
+                });
+            const newOption = document.createElement('option');
+            newOption.value = '__new__';
+            newOption.textContent = '＋ Neuen Hersteller hinzufügen...';
+            manufacturerSelect.appendChild(newOption);
+        }
+
+        // Neuen Hersteller direkt in GLPI anlegen
+        async function handleManufacturerChange() {
+            if (manufacturerSelect.value !== '__new__') {
+                return;
+            }
+            const name = prompt('Name des neuen Herstellers:');
+            manufacturerSelect.value = '';
+            if (!name || !name.trim()) {
+                return;
+            }
+            try {
+                const response = await fetch(`${API_BASE_URL}${API_PREFIX}/glpi/manufacturers`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name: name.trim()})
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.detail || 'Hersteller konnte nicht angelegt werden');
+                }
+                const option = document.createElement('option');
+                option.value = result.id;
+                option.textContent = result.name;
+                option.dataset.name = result.name;
+                manufacturerSelect.insertBefore(option, manufacturerSelect.lastElementChild);
+                manufacturerSelect.value = String(result.id);
+                showApiMessage('Hersteller in GLPI gespeichert.', 'success');
+            } catch (error) {
+                console.error('Hersteller anlegen Fehler:', error);
+                showApiMessage(`Hersteller konnte nicht angelegt werden: ${error.message}`, 'error');
+            }
+        }
+
         // Locations basierend auf Kunden filtern
         function filterLocationsByCustomer() {
             const customerId = customerSelect.value;
@@ -835,7 +899,8 @@
                 location_id: locationSelect.value || null,
                 user: userSelect.value || null,
                 technician: technicianSelect.value || null,
-                manufacturer: document.getElementById('manufacturer').value.trim() || null,
+                manufacturer_id: manufacturerSelect.value && manufacturerSelect.value !== '__new__' ? Number(manufacturerSelect.value) : null,
+                manufacturer: manufacturerSelect.selectedOptions[0]?.dataset.name || null,
                 model: document.getElementById('model').value.trim() || null,
                 serial_number: document.getElementById('serialNumber').value.trim() || null,
                 mac_address: document.getElementById('macAddress').value.trim() || null,
@@ -874,6 +939,7 @@
                     locations_id: formData.location_id ? Number(formData.location_id) : null,
                     serial: formData.serial_number,
                     otherserial: formData.mac_address,
+                    manufacturers_id: formData.manufacturer_id,
                     manufacturer: formData.manufacturer,
                     model: formData.model,
                     users_id: formData.user ? Number(formData.user) : null,
