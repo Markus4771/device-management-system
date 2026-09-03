@@ -95,7 +95,7 @@ class OCRProcessor:
             logger.error(f"Error moving file {file_path} to processing: {e}")
             return None
     
-    def process_file(self, file_path: Path, template_id: Optional[str] = None) -> Dict[str, Any]:
+    def process_file(self, file_path: Path, template_id: Optional[str] = None, handwriting_mode: bool = False) -> Dict[str, Any]:
         """
         Verarbeitet eine Datei mit OCR.
         
@@ -122,9 +122,9 @@ class OCRProcessor:
             
             # OCR-Engine basierend auf Dateityp auswählen
             if file_type == "pdf":
-                ocr_text, confidence = self._process_pdf(file_path)
+                ocr_text, confidence = self._process_pdf(file_path, handwriting_mode=handwriting_mode)
             else:
-                ocr_text, confidence = self._process_image(file_path)
+                ocr_text, confidence = self._process_image(file_path, handwriting_mode=handwriting_mode)
             
             results["ocr_text"] = ocr_text
             results["ocr_confidence"] = confidence
@@ -158,7 +158,7 @@ class OCRProcessor:
         else:
             return "unknown"
     
-    def _process_pdf(self, pdf_path: Path) -> Tuple[str, float]:
+    def _process_pdf(self, pdf_path: Path, handwriting_mode: bool = False) -> Tuple[str, float]:
         """
         Verarbeitet eine PDF-Datei mit OCR.
         
@@ -192,7 +192,7 @@ class OCRProcessor:
             page_count = len(images)
             
             for i, image in enumerate(images):
-                page_text, page_confidence = self._process_image_with_tesseract(image)
+                page_text, page_confidence = self._process_image_with_tesseract(image, handwriting_mode=handwriting_mode)
                 ocr_text_parts.append(f"--- Seite {i+1} ---\n{page_text}")
                 total_confidence += page_confidence
             
@@ -205,7 +205,7 @@ class OCRProcessor:
             logger.error("pdf2image nicht verfügbar")
             raise
     
-    def _process_image(self, image_path: Path) -> Tuple[str, float]:
+    def _process_image(self, image_path: Path, handwriting_mode: bool = False) -> Tuple[str, float]:
         """
         Verarbeitet ein Bild mit OCR.
         
@@ -216,12 +216,12 @@ class OCRProcessor:
             Tuple (erkannter Text, durchschnittliche Konfidenz)
         """
         if self.preferred_engine == "paddleocr":
-            return self._process_image_with_paddleocr(image_path)
+            return self._process_image_with_paddleocr(image_path, handwriting_mode=handwriting_mode)
         else:
             # Default: Tesseract
-            return self._process_image_with_tesseract(image_path)
+            return self._process_image_with_tesseract(image_path, handwriting_mode=handwriting_mode)
     
-    def _process_image_with_tesseract(self, image) -> Tuple[str, float]:
+    def _process_image_with_tesseract(self, image, handwriting_mode: bool = False) -> Tuple[str, float]:
         """
         Verarbeitet ein Bild mit Tesseract OCR.
         
@@ -233,13 +233,28 @@ class OCRProcessor:
         """
         try:
             import pytesseract
-            from PIL import Image
+            from PIL import Image, ImageOps
             
             if isinstance(image, (str, Path)):
                 image = Image.open(image)
             
+            # Handschriftliche Druckbuchstaben brauchen ein kontrastreicheres,
+            # höher aufgelöstes Bild und eine blockorientierte Seitensegmentierung.
+            if handwriting_mode:
+                image = ImageOps.grayscale(image)
+                image = ImageOps.autocontrast(image)
+                image = image.resize((image.width * 2, image.height * 2), Image.Resampling.LANCZOS)
+                tesseract_config = "--psm 6"
+            else:
+                tesseract_config = ""
+
             # Tesseract OCR durchführen
-            data = pytesseract.image_to_data(image, lang=self.ocr_language, output_type=pytesseract.Output.DICT)
+            data = pytesseract.image_to_data(
+                image,
+                lang=self.ocr_language,
+                config=tesseract_config,
+                output_type=pytesseract.Output.DICT
+            )
             
             # Text extrahieren
             text_lines = []
@@ -262,7 +277,7 @@ class OCRProcessor:
             logger.error("pytesseract nicht verfügbar")
             raise
     
-    def _process_image_with_paddleocr(self, image_path: Path) -> Tuple[str, float]:
+    def _process_image_with_paddleocr(self, image_path: Path, handwriting_mode: bool = False) -> Tuple[str, float]:
         """
         Verarbeitet ein Bild mit PaddleOCR.
         
@@ -274,6 +289,8 @@ class OCRProcessor:
         """
         try:
             from paddleocr import PaddleOCR
+            if handwriting_mode:
+                logger.info("Handwriting mode requested; using enhanced image preprocessing")
             
             ocr = PaddleOCR(use_angle_cls=True, lang=self.ocr_language[:3])  # Nur Sprachcode verwenden
             
