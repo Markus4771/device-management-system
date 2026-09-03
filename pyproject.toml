@@ -35,7 +35,6 @@ dependencies = [
     "pyyaml>=6.0",
     
     # File Processing & OCR
-    "tesseract>=0.1.8",
     "ocrmypdf>=15.0.0",
     "paddleocr>=2.7.0",
     "pillow>=10.0.0",
