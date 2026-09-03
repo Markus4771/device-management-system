@@ -146,6 +146,7 @@ document.getElementById('uploadForm').addEventListener('submit', async event => 
   body.append('file', file);
   document.getElementById('busy').style.display = 'block';
   document.getElementById('resultCard').style.display = 'none';
+  document.getElementById('sourceCard').style.display = 'none';
   document.getElementById('rawCard').style.display = 'none';
   try {
     const response = await fetch(API_PREFIX + '/ocr/process-upload', {method:'POST', body});
