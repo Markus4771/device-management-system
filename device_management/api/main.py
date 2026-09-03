@@ -48,14 +48,14 @@ def create_application() -> FastAPI:
         app.add_middleware(HTTPSRedirectMiddleware)
     
     # API-Router importieren und einbinden
-    from .routers import devices, customers, users, auth, glpi, ocr
+    from .routers import devices, customers, users, auth, glpi, ocr, setup
     
     app.include_router(auth.router, prefix=settings.api_prefix, tags=["Authentication"])
     app.include_router(devices.router, prefix=settings.api_prefix, tags=["Devices"])
     app.include_router(customers.router, prefix=settings.api_prefix, tags=["Customers"])
     app.include_router(users.router, prefix=settings.api_prefix, tags=["Users"])
     app.include_router(glpi.router, prefix=settings.api_prefix, tags=["GLPI"])
-    app.include_router(ocr.router, prefix=settings.api_prefix, tags=["OCR Processing"])
+    app.include_router(ocr.router, prefix=settings.api_prefix, tags=["OCR Processing"])\n    app.include_router(setup.router, prefix=f"{settings.api_prefix}/setup", tags=["Setup"])
     
     # Health Check Endpoint
     @app.get("/", tags=["Health"])
