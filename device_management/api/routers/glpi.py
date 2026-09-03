@@ -14,6 +14,53 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+from pydantic import BaseModel, Field
+
+class GLPIComputerCreateRequest(BaseModel):
+    name: str = Field(..., min_length=1)
+    entities_id: int
+    serial: Optional[str] = None
+    otherserial: Optional[str] = None
+    locations_id: Optional[int] = None
+    comment: Optional[str] = None
+    contact: Optional[str] = None
+    contact_num: Optional[str] = None
+    operatingsystems_id: Optional[int] = None
+
+
+@router.post("/glpi/computers")
+async def create_glpi_computer(data: GLPIComputerCreateRequest):
+    """Legt einen Computer direkt in GLPI an."""
+    try:
+        with GLPIAPIClient() as client:
+            if not client.session_token:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="GLPI-Verbindung fehlgeschlagen",
+                )
+            computer_data = data.model_dump(exclude_none=True)
+            computer_id = client.create_computer(computer_data)
+            if not computer_id:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="Computer konnte in GLPI nicht angelegt werden",
+                )
+            return {
+                "success": True,
+                "glpi_computer_id": computer_id,
+                "message": "Computer erfolgreich in GLPI angelegt.",
+            }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("GLPI computer creation failed")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"GLPI-Computer konnte nicht angelegt werden: {exc}",
+        )
+
+
+
 
 @router.get("/glpi/status")
 async def glpi_status():
