@@ -7,7 +7,7 @@ Bietet Endpoints für OCR-Verarbeitung, Formularvorlagen und Dateiüberwachung.
 import logging
 from typing import List, Optional, Dict, Any
 from pathlib import Path
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, BackgroundTasks
 from fastapi.responses import JSONResponse, FileResponse
 
 from ..dependencies import get_current_active_user, get_current_superuser
@@ -82,7 +82,7 @@ class OCRManager:
             "message": "OCR Service stopped successfully"
         }
     
-    def upload_and_process(self, file: UploadFile, template_id: Optional[str] = None) -> Dict[str, Any]:
+    def upload_and_process(self, file: UploadFile, template_id: Optional[str] = None, handwriting_mode: bool = False) -> Dict[str, Any]:
         """
         Lädt eine Datei hoch und verarbeitet sie sofort.
         
@@ -108,7 +108,7 @@ class OCRManager:
             logger.info(f"Uploaded OCR source file {file.filename} to {source_path}")
             
             # OCR-Verarbeitung durchführen; die Originaldatei bleibt für die Prüfung erhalten.
-            result = self.service.process_file(source_path, template_id)
+            result = self.service.process_file(source_path, template_id, handwriting_mode=handwriting_mode)
             result["source_file_name"] = review_name
             result["source_file_type"] = file.content_type or "application/octet-stream"
             return result
@@ -207,7 +207,8 @@ async def stop_ocr_service(
 @router.post("/ocr/process-upload", response_model=OCRProcessResult, tags=["OCR Processing"])
 async def process_uploaded_file(
     file: UploadFile = File(...),
-    template_id: Optional[str] = None
+    template_id: Optional[str] = Form(None),
+    handwriting_mode: bool = Form(False)
 ):
     """
     Lädt eine Datei hoch und verarbeitet sie mit OCR.
@@ -225,7 +226,7 @@ async def process_uploaded_file(
         )
     
     try:
-        result = ocr_manager.upload_and_process(file, template_id)
+        result = ocr_manager.upload_and_process(file, template_id, handwriting_mode)
         
         # Schema-Konvertierung für Response
         return OCRProcessResult(
