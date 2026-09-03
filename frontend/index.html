@@ -231,19 +231,7 @@
                     <label for="localAdminPassword" class="form-label">Passwort</label>
                     <input type="password" class="form-control" id="localAdminPassword" autocomplete="new-password">
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label for="teamviewerUser" class="form-label">TeamViewer-Benutzer</label>
-                    <input type="text" class="form-control" id="teamviewerUser" autocomplete="off">
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="teamviewerPassword" class="form-label">TeamViewer-Passwort</label>
-                    <input type="password" class="form-control" id="teamviewerPassword" autocomplete="new-password">
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="rustdeskUser" class="form-label">RustDesk-Benutzer</label>
-                    <input type="text" class="form-control" id="rustdeskUser" autocomplete="off">
-                </div>
-                <div class="col-md-6 mb-3">
+<div class="col-md-6 mb-3">
                     <label for="rustdeskPassword" class="form-label">RustDesk-Passwort</label>
                     <input type="password" class="form-control" id="rustdeskPassword" autocomplete="new-password">
                 </div>
@@ -580,7 +568,7 @@
                         </div>
                         <div class="mb-2">
                             <strong>OCR-Service:</strong>
-                            <span id="ocrServiceStatus" class="badge bg-secondary ms-2">Stoppen</span>
+                            <span id="ocrServiceStatus" class="badge bg-secondary ms-2">Wird geprüft...</span>
                         </div>
                         <button class="btn btn-sm btn-outline-primary w-100 mt-2" onclick="checkApiStatus()">
                             <i class="fas fa-sync-alt me-1"></i> Status aktualisieren
@@ -673,7 +661,7 @@
             console.log('Device Management Frontend gestartet');
             checkApiStatus();
             setupEventListeners();
-            loadGlpiData();
+            loadGlpiData().then(() => applyOcrDraft());
         });
 
         // Event Listeners einrichten
@@ -860,6 +848,7 @@
                 populateComputerTypeSelect(glpiData.computerTypes);
                 
                 showApiMessage('GLPI-Daten erfolgreich geladen', 'success');
+                applyOcrDraft();
                 
             } catch (error) {
                 console.error('GLPI Daten laden Fehler:', error);
@@ -1180,10 +1169,50 @@
             showApiMessage('Formular wurde zurückgesetzt', 'success');
         }
 
-        // OCR Upload anzeigen
+        // OCR-Kontrollseite öffnen
         function showOcrUpload() {
-            alert('OCR-Upload Funktion wird implementiert...\n\nHier können Sie gescannte Formulare hochladen, die automatisch verarbeitet werden.');
-            // In der finalen Implementierung: Modal mit Dateiauswahl öffnen
+            window.location.href = '/ocr-review.html';
+        }
+
+        // OCR-Ergebnis aus der Kontrollseite in das Geräteformular übernehmen
+        function applyOcrDraft() {
+            const raw = localStorage.getItem('deviceManagementOcrDraft');
+            if (!raw) return;
+            let draft;
+            try { draft = JSON.parse(raw); } catch (error) { return; }
+
+            const setValue = (id, value) => {
+                const field = document.getElementById(id);
+                if (field && value !== undefined && value !== null && value !== '') field.value = value;
+            };
+            const setSelect = (id, value) => {
+                const field = document.getElementById(id);
+                if (!field || value === undefined || value === null || value === '') return;
+                const wanted = String(value).toLowerCase();
+                const option = Array.from(field.options).find(item =>
+                    String(item.value).toLowerCase() === wanted ||
+                    String(item.textContent).toLowerCase().includes(wanted)
+                );
+                if (option) field.value = option.value;
+            };
+            setValue('pcName', draft.pc_name);
+            setValue('serialNumber', draft.serial_number);
+            setValue('model', draft.model);
+            setValue('operatingSystem', draft.operating_system);
+            setValue('ipAddress', draft.ip_address);
+            setValue('domain', draft.domain);
+            setValue('macAddress', draft.mac_address);
+            setValue('teamviewerId', draft.teamviewer_id);
+            setValue('rustdeskId', draft.rustdesk_id);
+            setValue('notes', draft.notes);
+            setSelect('customer', draft.customer);
+            setSelect('location', draft.location);
+            setSelect('user', draft.user);
+            setSelect('technician', draft.technician);
+            setSelect('manufacturer', draft.manufacturer);
+            setSelect('computerType', draft.computer_type);
+            localStorage.removeItem('deviceManagementOcrDraft');
+            showApiMessage('OCR-Daten wurden in das Geräteformular übernommen. Bitte noch prüfen und speichern.', 'success');
         }
 
         // Vorhandene Dateien scannen
@@ -1264,10 +1293,8 @@
                 local_admin: document.getElementById('localAdmin').value.trim() || null,
                 local_admin_password: document.getElementById('localAdminPassword').value || null,
                 teamviewer_id: document.getElementById('teamviewerId').value.trim() || null,
-                teamviewer_user: document.getElementById('teamviewerUser').value.trim() || null,
                 teamviewer_password: document.getElementById('teamviewerPassword').value || null,
                 rustdesk_id: document.getElementById('rustdeskId').value.trim() || null,
-                rustdesk_user: document.getElementById('rustdeskUser').value.trim() || null,
                 rustdesk_password: document.getElementById('rustdeskPassword').value || null,
                 master_password: masterPassword
             };
