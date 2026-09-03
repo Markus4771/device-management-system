@@ -26,6 +26,19 @@ class GLPIComputerCreateRequest(BaseModel):
     contact: Optional[str] = None
     contact_num: Optional[str] = None
     operatingsystems_id: Optional[int] = None
+    manufacturers_id: Optional[int] = None
+    computermodels_id: Optional[int] = None
+    users_id: Optional[int] = None
+    users_id_tech: Optional[int] = None
+    states_id: Optional[int] = None
+    computertypes_id: Optional[int] = None
+    networks_id: Optional[int] = None
+    autoupdatesystems_id: Optional[int] = None
+    uuid: Optional[str] = None
+    contact_num: Optional[str] = None
+    inventory_number: Optional[str] = None
+    manufacturer: Optional[str] = None
+    model: Optional[str] = None
 
 
 @router.post("/glpi/computers")
@@ -39,7 +52,15 @@ async def create_glpi_computer(data: GLPIComputerCreateRequest):
                     detail="GLPI-Verbindung fehlgeschlagen",
                 )
             computer_data = data.model_dump(exclude_none=True)
-            computer_id = client.create_computer(computer_data)
+            # Textangaben werden mit den GLPI-Referenzobjekten verknüpft.
+            if data.manufacturer and not data.manufacturers_id:
+                computer_data["manufacturers_id"] = client.find_or_create_reference("Manufacturer", data.manufacturer)
+            if data.model and not data.computermodels_id:
+                computer_data["computermodels_id"] = client.find_or_create_reference("ComputerModel", data.model)
+            computer_data.pop("manufacturer", None)
+            computer_data.pop("model", None)
+            computer_data.pop("inventory_number", None)
+            computer_id = client.create_computer({k: v for k, v in computer_data.items() if v is not None})
             if not computer_id:
                 raise HTTPException(
                     status_code=status.HTTP_502_BAD_GATEWAY,
