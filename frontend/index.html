@@ -1181,10 +1181,7 @@
             document.getElementById('localAdmin').value = 'infodatacom';
             document.getElementById('teamviewerUser').value = document.getElementById('teamviewerUserForm').value;
             document.getElementById('rustdeskUser').value = document.getElementById('rustdeskUserForm').value;
-            document.getElementById('localUserPassword').value = generatePassword();
-            document.getElementById('localAdminPassword').value = generatePassword();
-            document.getElementById('teamviewerPassword').value = generatePassword();
-            document.getElementById('rustdeskPassword').value = generatePassword();
+            // Vom Techniker eingegebene Passwörter bleiben erhalten.
             if (!pcName) {
                 showApiMessage('Bitte zuerst den PC-Namen im Geräteformular eingeben.', 'error');
                 return;
@@ -1206,6 +1203,11 @@
         // Erzeugt eine verschlüsselte KeePass-Datei für genau diesen Rechner.
         async function downloadKeepassFile() {
             const masterPassword = document.getElementById('keepassMasterPassword').value;
+            // Nur leere Passwortfelder werden automatisch gefüllt.
+            for (const id of ['localUserPassword', 'localAdminPassword', 'teamviewerPassword', 'rustdeskPassword']) {
+                const field = document.getElementById(id);
+                if (!field.value) field.value = generatePassword();
+            }
             if (masterPassword.length < 12) {
                 showApiMessage('Das KeePass-Masterpasswort muss mindestens 12 Zeichen lang sein.', 'error');
                 return;
@@ -1230,11 +1232,6 @@
                 rustdesk_password: document.getElementById('rustdeskPassword').value || null,
                 master_password: masterPassword
             };
-            if (!payload.local_user_password && !payload.local_admin_password &&
-                !payload.teamviewer_password && !payload.rustdesk_password) {
-                showApiMessage('Bitte mindestens ein Zugangspasswort eingeben.', 'error');
-                return;
-            }
             try {
                 const response = await fetch(`${API_BASE_URL}${API_PREFIX}/credentials/keepass`, {
                     method: 'POST',
