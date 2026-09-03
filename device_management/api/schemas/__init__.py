@@ -237,6 +237,8 @@ class OCRProcessResult(BaseModel):
     source_file_url: Optional[str] = None
     source_file_type: Optional[str] = None
     error_message: Optional[str] = None
+    layout_fields: Dict[str, Any] = Field(default_factory=dict)
+    handwriting_model: Dict[str, Any] = Field(default_factory=dict)
     
     class Config:
         from_attributes = True
