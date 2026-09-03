@@ -209,14 +209,14 @@ class GLPIAPIClient:
     def find_or_create_reference(self, itemtype: str, name: str) -> Optional[int]:
         """Findet ein GLPI-Referenzobjekt oder legt es bei Bedarf an."""
         try:
-            response = self.client.get(f"/{itemtype}", params={"searchText": name})
+            response = self.client.get(f"/{itemtype}", headers=self._get_headers())
             if response.status_code == 200:
                 items = response.json()
                 if isinstance(items, list):
                     for item in items:
                         if str(item.get("name", "")).strip().lower() == name.strip().lower():
                             return item.get("id")
-            response = self.client.post(f"/{itemtype}", json={"input": {"name": name}})
+            response = self.client.post(f"/{itemtype}", headers=self._get_headers(), json={"input": {"name": name}})
             if response.status_code in (200, 201):
                 data = response.json()
                 if isinstance(data, dict):
