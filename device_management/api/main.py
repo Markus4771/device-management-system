@@ -5,6 +5,7 @@ FastAPI-App mit allen Routen und Abhängigkeiten für Phase 1.
 """
 
 from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 from typing import List, Optional
@@ -78,10 +79,13 @@ def create_application() -> FastAPI:
     @app.exception_handler(Exception)
     async def generic_exception_handler(request, exc):
         logger.error(f"Unhandled exception: {exc}", exc_info=True)
-        return {
-            "detail": "Ein interner Serverfehler ist aufgetreten.",
-            "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
-        }
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={
+                "detail": "Ein interner Serverfehler ist aufgetreten.",
+                "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
+            },
+        )
     
     return app
 
