@@ -212,7 +212,7 @@ setup_ocr_directories() {
     sed -i "s|^OCR_PROCESSING_PATH=.*|OCR_PROCESSING_PATH=$OCR_BASE/in-bearbeitung|" .env
     sed -i "s|^OCR_DONE_PATH=.*|OCR_DONE_PATH=$OCR_BASE/erledigt|" .env
     sed -i "s|^OCR_ERROR_PATH=.*|OCR_ERROR_PATH=$OCR_BASE/fehler|" .env
-    sed -i "s|^OCRRCHIVE_PATH=.*|OCRRCHIVE_PATH=$OCR_BASE/archiv|" .env
+    sed -i "s|^OCR_ARCHIVE_PATH=.*|OCRRCHIVE_PATH=$OCR_BASE/archiv|" .env
     
     log_success "OCR-Verzeichnisse eingerichtet in $OCR_BASE"
 }
