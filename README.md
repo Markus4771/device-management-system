@@ -108,3 +108,17 @@ Die Phase 1 ist bereits vollständig mit den Phase-2-Modulen integriert:
 ## 📄 Lizenz
 
 Proprietär - Für den internen Gebrauch entwickelt.
+
+
+## 🌐 GLPI-Konfiguration über die GUI
+
+Der Installer fragt die GLPI-Zugangsdaten nicht mehr in der Console ab. Nach der Installation:
+
+1. Die IP-Adresse des Servers im Browser öffnen.
+2. **Ersteinrichtung** unter `http://SERVER-IP/setup` öffnen.
+3. GLPI-Adresse, Application Token und User Token eingeben.
+4. **Verbindung testen** auswählen.
+5. Die Konfiguration speichern.
+
+Die GLPI-Zugangsdaten werden in der lokalen `.env`-Datei gespeichert. Der webbasierte Assistent ist nur verfügbar, solange noch keine gültige GLPI-Konfiguration hinterlegt ist.
+
