@@ -867,10 +867,31 @@
             try {
                 showApiMessage('Gerät wird gespeichert...', 'success');
                 
-                const response = await fetch(`${API_BASE_URL}${API_PREFIX}/devices`, {
+                // Geräte werden zunächst direkt in GLPI angelegt.
+                const glpiPayload = {
+                    name: formData.pc_name,
+                    entities_id: Number(formData.customer_id),
+                    locations_id: formData.location_id ? Number(formData.location_id) : null,
+                    serial: formData.serial_number,
+                    otherserial: formData.mac_address,
+                    contact: formData.user,
+                    contact_num: formData.technician,
+                    comment: [
+                        formData.manufacturer ? 'Hersteller: ' + formData.manufacturer : '',
+                        formData.model ? 'Modell: ' + formData.model : '',
+                        formData.operating_system ? 'Betriebssystem: ' + formData.operating_system : '',
+                        formData.domain ? 'Domain/Arbeitsgruppe: ' + formData.domain : '',
+                        formData.teamviewer_id ? 'TeamViewer: ' + formData.teamviewer_id : '',
+                        formData.rustdesk_id ? 'RustDesk: ' + formData.rustdesk_id : '',
+                        formData.netlock_rmm_agent ? 'NetLock RMM: installiert' : '',
+                        formData.antivirus ? 'Virenschutz: ' + formData.antivirus : '',
+                        formData.notes || ''
+                    ].filter(Boolean).join('\\n')
+                };
+                const response = await fetch(`${API_BASE_URL}${API_PREFIX}/glpi/computers`, {
                     method: 'POST',
                     headers: headers,
-                    body: JSON.stringify(formData)
+                    body: JSON.stringify(glpiPayload)
                 });
                 
                 if (response.ok) {
