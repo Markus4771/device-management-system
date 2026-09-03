@@ -59,9 +59,11 @@ async def export_keepass(data: KeepassExportRequest):
     file_buffer = io.BytesIO()
     temp_path = None
     try:
+        import os
         import tempfile
-        with tempfile.NamedTemporaryFile(suffix=".kdbx") as temp_file:
-            temp_path = temp_file.name
+        temp_file = tempfile.NamedTemporaryFile(suffix=".kdbx", delete=False)
+        temp_path = temp_file.name
+        temp_file.close()
         keepass = create_database(temp_path, password=_secret(data.master_password))
         group = keepass.add_group(keepass.root_group, data.pc_name.strip())
 
@@ -90,6 +92,30 @@ async def export_keepass(data: KeepassExportRequest):
             file_buffer.write(exported_file.read())
     except HTTPException:
         raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"KeePass-Datei konnte nicht erzeugt werden: {exc}",
+        ) from exc
+    finally:
+        if temp_path:
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
+
+    filename = f"{_safe_filename(data.pc_name)}-zugangsdaten.kdbx"
+    return Response(
+        content=file_buffer.getvalue(),
+        media_type="application/octet-stream",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "no-store",
+        },
+    )
+
+# END
+#        raise
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
