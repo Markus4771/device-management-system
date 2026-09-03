@@ -248,7 +248,8 @@ async def process_uploaded_file(
             raw_text_preview=result.get("ocr_text", "")[:500] if result.get("ocr_text") else "",
             template_applied=result.get("template_id"),
             source_file_url=f"/api/v1/ocr/source/{result.get('source_file_name')}" if result.get("source_file_name") else None,
-            source_file_type=result.get("source_file_type")
+            source_file_type=result.get("source_file_type"),
+            error_message=result.get("error_message")
         )
         
     except HTTPException:
